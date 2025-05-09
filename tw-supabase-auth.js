@@ -6,7 +6,7 @@
   // --- Configuration ---
   // Replace with your actual Supabase Project URL and Anon Key
   const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // e.g., "https://gxqbrcutslyybxexvszr.supabase.co"
-  const SUPABASE_ANON_KEY = "https://gxqbrcutslyybxexvszr.supabase.co"; // Your project's public anon key
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
 
   // Replace with the EXACT URL where you host your login.html file
   // This URL is used in window.open() to launch the popup.
@@ -19,13 +19,6 @@
   // - If embedding on your own web page: "https://your-embedding-domain.com" (e.g., "https://colebohte.github.io")
   // - If running in Electron or TurboWarp Desktop: "file://"
   const TURBOWARP_ORIGIN = "file://"; // <--- Set this based on your target environment!
-
-  // --- Supabase Client Initialization ---
-  const script = document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
-  script.onload = () => {
-    // Initialize the Supabase client once the script is loaded
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // --- Supabase Client Initialization ---
   const script = document.createElement("script");

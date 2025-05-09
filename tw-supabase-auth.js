@@ -25,24 +25,29 @@
   script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
   script.onload = () => {
     // Initialize the Supabase client once the script is loaded
+    // using the constants defined above.
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     // --- TurboWarp Extension Definition ---
     class SupabaseAuthExtension {
       constructor() {
         this.user = null; // Stores the logged-in user object
+        // The supabase client instance is now initialized outside the constructor
 
         // Listen for messages from the popup window
         // The login.html page will send the user data back using postMessage
         window.addEventListener("message", (event) => {
           // IMPORTANT: Verify the origin of the message for security!
           // Ensure the message is coming from your trusted login page origin.
-          // This origin check remains based on the hosted login.html URL.
+          // This origin check now uses the LOGIN_PAGE_URL constant.
           if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
             if (event.data && event.data.type === "supabase-auth") {
               // Update the user data when received from the popup
               this.user = event.data.user;
               console.log("Supabase user data received."); // Simplified log
+              // You could add a custom event or broadcast a Scratch message here
+              // to notify your Scratch project that the user state has changed.
+              // Example: Scratch.vm.runtime.emit('LOGIN_SUCCESS', this.user);
             }
           } else {
             console.warn("Received message from untrusted origin:", event.origin);
@@ -50,6 +55,7 @@
         });
 
          // Check for an existing session when the extension loads
+         // This now happens after the Supabase client is initialized in script.onload
          supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
               this.user = session.user;
@@ -60,6 +66,7 @@
          });
 
         // Listen for auth state changes (primarily for sign-out if implemented elsewhere)
+        // This is now attached after the Supabase client is initialized in script.onload
         supabase.auth.onAuthStateChange((_event, session) => {
            if (_event === 'SIGNED_OUT') {
                this.user = null;
@@ -78,7 +85,8 @@
             {
               opcode: "signIn", // Reverted opcode
               blockType: Scratch.BlockType.COMMAND, // Command block (runs an action)
-              text: "sign in with Google" // Reverted text
+              text: "sign in with Google", // Reverted text (no arguments needed here)
+              // Remove arguments property as config is now constants
             },
             {
               opcode: "getEmail",
@@ -117,11 +125,12 @@
       // --- Block Implementations ---
 
       // Implementation for the "sign in with Google" command block
-      // This now opens the login.html page without a provider parameter
-      signIn() { // Reverted function name
+      // Now uses the constants defined at the top.
+      signIn() { // Reverted function name and removed args parameter
         // Open the login.html page
+        // Pass constants and provider as query params
         window.open(
-          LOGIN_PAGE_URL, // Use the defined URL for your login.html
+          `${LOGIN_PAGE_URL}?supabaseUrl=${encodeURIComponent(SUPABASE_URL)}&supabaseKey=${encodeURIComponent(SUPABASE_ANON_KEY)}&turbowarpOrigin=${encodeURIComponent(TURBOWARP_ORIGIN)}&provider=google`, // Pass constants and provider
           "_blank", // Open in a new blank tab/window
           "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
         );
@@ -161,15 +170,16 @@
 
        // Implementation for the "sign out" command block
        async signOut() {
-         // Call Supabase sign out
-         const { error } = await supabase.auth.signOut();
-         if (!error) {
-            this.user = null; // Clear local user state on successful sign out
-            console.log("User signed out successfully."); // Log for debugging
-             // You might want to broadcast a Scratch message here to update UI
-         } else {
-            console.error("Sign out failed:", error.message); // Log error
-         }
+         // Ensure Supabase client is initialized before signing out
+         // The client is now initialized in script.onload, so it should exist.
+           const { error } = await supabase.auth.signOut(); // Use the 'supabase' variable from script.onload scope
+           if (!error) {
+              this.user = null; // Clear local user state on successful sign out
+              console.log("User signed out successfully."); // Log for debugging
+               // You might want to broadcast a Scratch message here to update UI
+           } else {
+              console.error("Sign out failed:", error.message); // Log error
+           }
        }
     }
 

@@ -14,7 +14,7 @@
         // Listen for messages from the login popup
         window.addEventListener("message", (event) => {
           // Validate the origin of the message
-          if (event.origin.startsWith("https://your-username.github.io")) {
+          if (event.origin.startsWith("https://colebohte.github.io")) {
             if (event.data.type === "supabase-auth") {
               // Set the user data when the message is received
               this.user = event.data.user;
@@ -55,7 +55,7 @@
       // Sign in with Google: opens the login popup
       signIn() {
         window.open(
-          "https://your-username.github.io/tw-auth-app/login.html",
+          "https://colebohte.io/river-services/login.html",
           "_blank",
           "width=500,height=600"
         );

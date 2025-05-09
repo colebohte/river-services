@@ -37,6 +37,7 @@
         window.addEventListener("message", (event) => {
           // IMPORTANT: Verify the origin of the message for security!
           // Ensure the message is coming from your trusted login page origin.
+          // This origin check remains based on the hosted login.html URL.
           if (event.origin === new URL(LOGIN_PAGE_BASE_URL).origin) {
             if (event.data && event.data.type === "supabase-auth") {
               // Update the user data when received from the popup
@@ -93,6 +94,26 @@
               opcode: "getUID",
               blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
               text: "user UID"
+            },
+             { // Add block to get user's full name from metadata
+              opcode: "getFullName",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "user full name"
+            },
+             { // Add block to get user's avatar URL from metadata
+              opcode: "getAvatarURL",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "user avatar URL"
+            },
+             { // Add block to check if the user is logged in
+              opcode: "isLoggedIn",
+              blockType: Scratch.BlockType.BOOLEAN, // Boolean block (returns true/false)
+              text: "is logged in?"
+            },
+             { // Add a sign out block
+              opcode: "signOut",
+              blockType: Scratch.BlockType.COMMAND, // Command block
+              text: "sign out"
             }
           ]
         };
@@ -131,6 +152,38 @@
         // Return the UID from the stored user object, or an empty string if not logged in
         return this.user?.id ?? "";
       }
+
+      // Implementation for the "user full name" reporter block
+      getFullName() {
+        // Return the full name from user_metadata, or an empty string
+        return this.user?.user_metadata?.full_name ?? "";
+      }
+
+      // Implementation for the "user avatar URL" reporter block
+      getAvatarURL() {
+        // Return the avatar URL from user_metadata, or an empty string
+        return this.user?.user_metadata?.avatar_url ?? "";
+      }
+
+
+      // Implementation for the "is logged in?" boolean block
+      isLoggedIn() {
+         // Return true if the user object is not null, false otherwise
+         return this.user !== null;
+      }
+
+       // Implementation for the "sign out" command block
+       async signOut() {
+         // Call Supabase sign out
+         const { error } = await supabase.auth.signOut();
+         if (!error) {
+            this.user = null; // Clear local user state on successful sign out
+            console.log("User signed out successfully."); // Log for debugging
+             // You might want to broadcast a Scratch message here to update UI
+         } else {
+            console.error("Sign out failed:", error.message); // Log error
+         }
+       }
     }
 
     // Register the extension with Scratch/TurboWarp

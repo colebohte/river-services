@@ -27,6 +27,13 @@
     // Initialize the Supabase client once the script is loaded
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+  // --- Supabase Client Initialization ---
+  const script = document.createElement("script");
+  script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
+  script.onload = () => {
+    // Initialize the Supabase client once the script is loaded
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     // --- TurboWarp Extension Definition ---
     class SupabaseAuthExtension {
       constructor() {

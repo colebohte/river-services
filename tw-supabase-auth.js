@@ -1,6 +1,7 @@
 // TurboWarp Extension for Supabase Google Authentication via Popup
 // This extension opens a popup window for the Google OAuth flow
 // and receives the user session data back via postMessage.
+// Added features to get more user details from Google profile metadata.
 
 (function (Scratch) {
   // --- Configuration ---
@@ -33,7 +34,7 @@
         this.user = null; // Stores the logged-in user object
 
         // Listen for messages from the popup window
-        // The login.html page will send the user data back using postMessage
+        // The login.html page will send the user data back via postMessage
         window.addEventListener("message", (event) => {
           // IMPORTANT: Verify the origin of the message for security!
           // Ensure the message is coming from your trusted login page origin.
@@ -43,6 +44,7 @@
               // Update the user data when received from the popup
               this.user = event.data.user;
               console.log("Supabase user data received:", this.user); // Log for debugging
+              console.log("User Metadata:", this.user?.user_metadata); // Log metadata for debugging
               // You could add a custom event or broadcast a Scratch message here
               // to notify your Scratch project that the user state has changed.
               // Example: Scratch.vm.runtime.emit('LOGIN_SUCCESS', this.user);
@@ -58,6 +60,7 @@
             if (session) {
               this.user = session.user;
               console.log("Existing Supabase session found:", this.user); // Log for debugging
+              console.log("User Metadata:", this.user?.user_metadata); // Log metadata for debugging
               // You might want to notify Scratch project here too
             }
          }).catch(err => {
@@ -109,6 +112,37 @@
               opcode: "signOut",
               blockType: Scratch.BlockType.COMMAND, // Command block
               text: "sign out"
+            },
+            // --- New Blocks for User Details ---
+            {
+              opcode: "getProfilePicUrl",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "profile picture URL"
+            },
+            {
+              opcode: "getFullName",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "full name"
+            },
+            {
+              opcode: "getShortName",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "short name"
+            },
+            {
+              opcode: "getLanguage",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "language"
+            },
+            {
+              opcode: "getRegion",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "region"
+            },
+            {
+              opcode: "isEmailVerified",
+              blockType: Scratch.BlockType.BOOLEAN,
+              text: "is email verified?"
             }
           ]
         };
@@ -157,6 +191,47 @@
          } else {
             console.error("Sign out failed:", error.message); // Log error
          }
+       }
+
+       // --- New Block Implementations for User Details ---
+
+       // Implementation for "profile picture URL" reporter block
+       getProfilePicUrl() {
+           // Google profile picture URL is typically in user_metadata.avatar_url
+           return this.user?.user_metadata?.avatar_url ?? "";
+       }
+
+       // Implementation for "full name" reporter block
+       getFullName() {
+           // Full name is typically in user_metadata.full_name or user_metadata.name
+           return this.user?.user_metadata?.full_name ?? this.user?.user_metadata?.name ?? "";
+       }
+
+       // Implementation for "short name" reporter block
+       getShortName() {
+           // Short name might be in user_metadata.user_name or similar, or derived from full name
+           // This is less standard, let's use user_metadata.user_name if available, or part of full name
+           return this.user?.user_metadata?.user_name ?? this.user?.user_metadata?.name?.split(' ')[0] ?? "";
+       }
+
+       // Implementation for "language" reporter block
+       getLanguage() {
+            // Language is often available in user_metadata.locale
+           return this.user?.user_metadata?.locale ?? "";
+       }
+
+       // Implementation for "region" reporter block
+       getRegion() {
+           // Region is not standard in Google OAuth user_metadata. Locale might contain it (e.g., "en-CA").
+           // We'll return the locale for now, or you might need to parse it.
+           // If you need a specific region code, you might need a lookup based on locale.
+           return this.user?.user_metadata?.locale ?? ""; // Returning locale as region often isn't separate
+       }
+
+       // Implementation for "is email verified?" boolean block
+       isEmailVerified() {
+           // Supabase user object has email_confirmed_at. If it's not null, the email is verified.
+           return this.user?.email_confirmed_at !== null && this.user?.email_confirmed_at !== undefined;
        }
     }
 

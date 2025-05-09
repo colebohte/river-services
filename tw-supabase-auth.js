@@ -1,17 +1,17 @@
-// TurboWarp Extension for Supabase Google and Discord Authentication via Popup
-// This extension opens a popup window for the OAuth flow
+// TurboWarp Extension for Supabase Google Authentication via Popup
+// This extension opens a popup window for the Google OAuth flow
 // and receives the user session data back via postMessage.
 
 (function (Scratch) {
   // --- Configuration ---
   // Replace with your actual Supabase Project URL and Anon Key
-  const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // e.g., "https://gxqbrcutslyybxexvszr.supabase.co"
+  const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.coo"; // e.g., "https://gxqbrcutslyybxexvszr.supabase.co"
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
 
   // Replace with the EXACT URL where you host your login.html file
   // This URL is used in window.open() to launch the popup.
   // This page MUST be hosted online (e.g., GitHub Pages) for the OAuth redirect to work.
-  const LOGIN_PAGE_BASE_URL = "https://colebohte.github.io/river-services/login.html"; // e.g., "https://colebohte.github.io/river-services/login.html"
+  const LOGIN_PAGE_URL = "https:/colebohte.github.io/river-services/login.html"; // e.g., "https://colebohte.github.io/river-services/login.html"
 
   // IMPORTANT: Set this to the EXACT origin of the window running your TurboWarp project.
   // This is crucial for security in postMessage.
@@ -38,7 +38,7 @@
           // IMPORTANT: Verify the origin of the message for security!
           // Ensure the message is coming from your trusted login page origin.
           // This origin check remains based on the hosted login.html URL.
-          if (event.origin === new URL(LOGIN_PAGE_BASE_URL).origin) {
+          if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
             if (event.data && event.data.type === "supabase-auth") {
               // Update the user data when received from the popup
               this.user = event.data.user;
@@ -76,14 +76,9 @@
           color1: "#3ECF8E", // Supabase green color for blocks
           blocks: [
             {
-              opcode: "signInGoogle",
+              opcode: "signIn", // Reverted opcode
               blockType: Scratch.BlockType.COMMAND, // Command block (runs an action)
-              text: "sign in with Google"
-            },
-             {
-              opcode: "signInDiscord",
-              blockType: Scratch.BlockType.COMMAND, // Command block
-              text: "sign in with Discord"
+              text: "sign in with Google" // Reverted text
             },
             {
               opcode: "getEmail",
@@ -122,23 +117,15 @@
       // --- Block Implementations ---
 
       // Implementation for the "sign in with Google" command block
-      signInGoogle() {
-        // Open the login.html page with a parameter for Google auth
+      // This now opens the login.html page without a provider parameter
+      signIn() { // Reverted function name
+        // Open the login.html page
         window.open(
-          `${LOGIN_PAGE_BASE_URL}?provider=google`, // Add provider parameter
+          LOGIN_PAGE_URL, // Use the defined URL for your login.html
           "_blank", // Open in a new blank tab/window
           "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
         );
-      }
-
-       // Implementation for the "sign in with Discord" command block
-      signInDiscord() {
-        // Open the login.html page with a parameter for Discord auth
-        window.open(
-          `${LOGIN_PAGE_BASE_URL}?provider=discord`, // Add provider parameter
-          "_blank", // Open in a new blank tab/window
-          "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
-        );
+        // Note: The actual Supabase signInWithOAuth call happens inside login.html
       }
 
       // Implementation for the "user email" reporter block

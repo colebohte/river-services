@@ -50,7 +50,7 @@
            console.log("Message sent, closing popup..."); // Log for debugging
            window.close(); // Close the popup after sending the data
         } else {
-           statusElement.innerText = 'Signed in. No opener window found.';
+           statusElement.innerText = 'Signed in. User data request failed: No opener window found';
            console.warn("No opener window found to send message to."); // Log if no opener
         }
 
@@ -76,7 +76,7 @@
               console.log("Initial session message sent, closing popup..."); // Log for debugging
               window.close(); // Close the popup
            } else {
-               statusElement.innerText = 'Already signed in. No opener window found.';
+               statusElement.innerText = 'Already signed in. User data request failed: No opener window found.';
                console.warn("No opener window found for initial session."); // Log if no opener
            }
       } else if (event === 'INITIAL_SESSION' && !session) {

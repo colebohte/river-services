@@ -25,7 +25,7 @@
   // Ensure the 'targetOrigin' in your login.html matches this value for security.
   const EXPECTED_TURBOWARP_ORIGIN_FOR_POSTMESSAGE = "file://"; // <--- Set this based on your target environment!
 
-  // --- Supabase Client Initialization ---
+ // --- Supabase Client Initialization ---
   const script = document.createElement("script");
   script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
   script.onload = () => {
@@ -140,22 +140,22 @@
             },
             {
               opcode: "getFullName",
-              blockType: Scratch.ArgumentType.REPORTER, // Corrected type here
+              blockType: Scratch.BlockType.REPORTER, // Corrected type here
               text: "full name"
             },
             {
               opcode: "getShortName",
-              blockType: Scratch.ArgumentType.REPORTER, // Corrected type here
+              blockType: Scratch.BlockType.REPORTER, // Corrected type here
               text: "short name"
             },
             {
               opcode: "getLanguage",
-              blockType: Scratch.ArgumentType.REPORTER,
+              blockType: Scratch.BlockType.REPORTER, // Corrected type here
               text: "language"
             },
             {
               opcode: "getRegion",
-              blockType: Scratch.ArgumentType.REPORTER,
+              blockType: Scratch.BlockType.REPORTER, // Corrected type here
               text: "region"
             },
             {

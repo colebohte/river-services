@@ -1,13 +1,14 @@
 // TurboWarp Extension for Supabase Google Authentication via Popup
 // This extension opens a popup window for the Google OAuth flow
 // and receives the user session data back via postMessage.
-// Added features to get more user details from Google profile metadata.
+// Added features to get more user details from Google profile metadata,
+// including a block for the profile picture URL (format depends on Google).
 
 (function (Scratch) {
   // --- Configuration ---
   // Replace with your actual Supabase Project URL and Anon Key
   const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // e.g., "https://gxqbrcutslyybxexvszr.supabase.co"
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjUY"; // Your project's public anon key
 
   // Replace with the EXACT URL where you host your login.html file
   // This URL is used in window.open() to launch the popup.
@@ -113,11 +114,16 @@
               blockType: Scratch.BlockType.COMMAND, // Command block
               text: "sign out"
             },
-            // --- New Blocks for User Details ---
+            // --- Blocks for User Details ---
             {
               opcode: "getProfilePicUrl",
               blockType: Scratch.BlockType.REPORTER,
               text: "profile picture URL"
+            },
+             { // New block for profile pic URL (specifically requested)
+              opcode: "getProfilePicPngUrl",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "profile pic png url" // Text for the new block
             },
             {
               opcode: "getFullName",
@@ -193,13 +199,23 @@
          }
        }
 
-       // --- New Block Implementations for User Details ---
+       // --- Implementations for User Details Blocks ---
 
-       // Implementation for "profile picture URL" reporter block
+       // Implementation for "profile picture URL" reporter block (existing)
        getProfilePicUrl() {
            // Google profile picture URL is typically in user_metadata.avatar_url
            return this.user?.user_metadata?.avatar_url ?? "";
        }
+
+        // Implementation for the new "profile pic png url" reporter block
+        getProfilePicPngUrl() {
+            // Google's avatar_url typically provides a direct link to the image.
+            // The format (PNG, JPG, etc.) is determined by the image itself.
+            // We are returning the direct URL provided by Google/Supabase.
+            // We cannot guarantee it's always PNG unless Google provides a specific URL parameter for that.
+            return this.user?.user_metadata?.avatar_url ?? "";
+        }
+
 
        // Implementation for "full name" reporter block
        getFullName() {

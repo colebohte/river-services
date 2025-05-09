@@ -1,34 +1,37 @@
 (function (Scratch) {
+  // Supabase URL and API key
   const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU";
 
+  // Load the Supabase JavaScript SDK
   const script = document.createElement("script");
   script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
   script.onload = () => {
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Create the extension for TurboWarp
     class SupabaseAuthExtension {
       constructor() {
-        this.user = null;
+        this.user = null;  // Stores user data (email, UID)
 
         // Listen for messages from the login popup
         window.addEventListener("message", (event) => {
-          // Validate the origin of the message
+          // Ensure the message comes from your GitHub Pages domain
           if (event.origin.startsWith("https://colebohte.github.io")) {
             if (event.data.type === "supabase-auth") {
-              // Set the user data when the message is received
+              // Store the user data when authentication is successful
               this.user = event.data.user;
             }
           }
         });
       }
 
-      // This is the info that TurboWarp uses to register the extension
+      // Extension metadata: Registering blocks and their functionalities
       getInfo() {
         return {
-          id: "supabaseAuth", // Unique ID for the extension
-          name: "Supabase Auth", // Name of the extension
-          color1: "#3ECF8E", // Main color for the extension
+          id: "supabaseAuth", // Unique identifier for the extension
+          name: "Supabase Auth", // Display name for the extension
+          color1: "#3ECF8E", // Main color for the extension's blocks
           blocks: [
             {
               opcode: "signIn", // Sign in block
@@ -52,28 +55,30 @@
         };
       }
 
-      // Sign in with Google: opens the login popup
+      // Function to open the Google sign-in popup
       signIn() {
         window.open(
-          "https://colebohte.io/river-services/login.html",
-          "_blank",
-          "width=500,height=600"
+          "https://colebohte.io/river-services/login.html", // URL to your login page
+          "_blank",  // Open in a new window
+          "width=500,height=600"  // Set the size of the popup
         );
       }
 
-      // Get the user's email
+      // Function to return the user's email (if logged in)
       getEmail() {
-        return this.user?.email ?? "";
+        return this.user?.email ?? "Not logged in"; // Return email or a default message
       }
 
-      // Get the user's UID
+      // Function to return the user's UID (if logged in)
       getUID() {
-        return this.user?.id ?? "";
+        return this.user?.id ?? "Not logged in"; // Return UID or a default message
       }
     }
 
-    // Register the extension with TurboWarp
+    // Register the custom extension with TurboWarp
     Scratch.extensions.register(new SupabaseAuthExtension());
   };
+
+  // Append the script to the document head to load the Supabase SDK
   document.head.appendChild(script);
 })(Scratch);

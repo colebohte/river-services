@@ -8,8 +8,8 @@
   <p>Logging in...</p>
   <script>
     const supabase = supabase.createClient(
-      "https://YOUR_PROJECT.supabase.co",
-      "YOUR_ANON_KEY"
+      "https://gxqbrcutslyybxexvszr.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"
     );
 
     supabase.auth.onAuthStateChange(async (event, session) => {
@@ -26,7 +26,7 @@
     supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: "https://your-username.github.io/tw-auth-app/login.html"
+        redirectTo: "https://colebohte.github.io/river-services/login.html"
       }
     });
   </script>

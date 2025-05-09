@@ -11,7 +11,7 @@
   // Replace with the EXACT URL where you host your login.html file
   // This URL is used in window.open() to launch the popup.
   // This page MUST be hosted online (e.g., GitHub Pages) for the OAuth redirect to work.
-  const LOGIN_PAGE_URL = "https:/colebohte.github.io/river-services/login.html"; // e.g., "https://colebohte.github.io/river-services/login.html"
+  const LOGIN_PAGE_URL = "https://colebohte.github.io/river-services/login.html"; // e.g., "https://colebohte.github.io/river-services/login.html"
 
   // IMPORTANT: Set this to the EXACT origin of the window running your TurboWarp project.
   // This is crucial for security in postMessage.

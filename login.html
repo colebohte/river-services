@@ -34,6 +34,7 @@
     <script>
         // --- Configuration ---
         // Replace with your actual Supabase URL and Anon Key
+        // These are hardcoded in this version.
         const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // Your project URL
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your anon key
 
@@ -46,12 +47,15 @@
         const targetOrigin = "file://"; // <--- Set this based on your target environment!
 
         // --- Supabase Client Initialization ---
+        // Client is initialized directly using the hardcoded constants.
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         const statusElement = document.getElementById('status');
 
         // Function to send message back to the opener and close
         function sendMessageToOpener(userData) {
              if (window.opener) {
+                 // In this older version, we didn't send loginPageUrlUsed back.
+                 // If your extension code expects it, you might need to add it back.
                  window.opener.postMessage(
                     { type: "supabase-auth", user: userData },
                     targetOrigin // Use the defined targetOrigin
@@ -83,7 +87,7 @@
                console.log("Initial session found...");
                sendMessageToOpener(session.user); // Send existing user data back
             } else if (event === 'INITIAL_SESSION' && !session) {
-                // No session initially, proceed to trigger the login
+                // No session initially, proceed to trigger the Google login
                 statusElement.innerText = 'Redirecting to Google...';
                 console.log(`Initiating OAuth flow for provider: google`);
 

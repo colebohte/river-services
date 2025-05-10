@@ -165,7 +165,7 @@
     // Command block to initiate login
     loginWithGoogle() {
         // Replace with the URL where your login.html is hosted on GitHub Pages
-        const loginPageUrl = 'https://yourusername.github.io/your-repo/login.html';
+        const loginPageUrl = 'https://colebohte.github.io/river-services/login.html';
         // Open login.html in a new window
         window.open(loginPageUrl, '_blank', 'width=600,height=700');
          // Note: The extension itself doesn't handle the redirect; login.html does.

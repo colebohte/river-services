@@ -20,6 +20,7 @@
   // - If running in Electron or TurboWarp Desktop: "file://"
   const TURBOWARP_ORIGIN = "file://"; // <--- Set this based on your target environment!
 
+
   // --- Supabase Client Initialization ---
   const script = document.createElement("script");
   script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
@@ -41,7 +42,7 @@
           console.log("Extension received message:", event);
           if (event.data) {
             console.log("Message data type:", event.data.type);
-            console.log("Message data user:", event.data.user);
+            console.log("Message data user (raw):", event.data.user); // Log raw user data
             if (event.data.loginPageUrlUsed) {
               console.log("Message data loginPageUrlUsed:", event.data.loginPageUrlUsed);
             } else {
@@ -58,13 +59,44 @@
           // This origin check now uses the LOGIN_PAGE_URL constant.
           if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
             if (event.data && event.data.type === "supabase-auth") {
-              // Update the user data when received from the popup
-              // This is the line that might trigger the VM error when assigning event.data.user
-              this.user = event.data.user;
-              console.log("Supabase user data assigned to extension."); // Log after assignment
-              // You could add a custom event or broadcast a Scratch message here
-              // to notify your Scratch project that the user state has changed.
-              // Example: Scratch.vm.runtime.emit('LOGIN_SUCCESS', this.user);
+              // --- IMPROVED DATA HANDLING ---
+              let receivedUser = event.data.user;
+              if (receivedUser) {
+                try {
+                  // Attempt to stringify and parse the user object
+                  // This can help clean up some data issues
+                  receivedUser = JSON.parse(JSON.stringify(receivedUser));
+                  console.log("Parsed user data:", receivedUser); // Log parsed data
+
+                  // Log specific properties that might cause issues
+                  console.log("Parsed user ID:", receivedUser.id);
+                  console.log("Parsed user email:", receivedUser.email);
+                  console.log("Parsed user metadata:", receivedUser.user_metadata);
+                  if (receivedUser.user_metadata) {
+                      console.log("Parsed user full_name:", receivedUser.user_metadata.full_name);
+                      console.log("Parsed user avatar_url:", receivedUser.user_metadata.avatar_url);
+                  }
+
+                  // Assign the potentially cleaned user data
+                  this.user = receivedUser;
+                  console.log("Supabase user data assigned to extension."); // Log after assignment
+
+                  // You could add a custom event or broadcast a Scratch message here
+                  // to notify your Scratch project that the user state has changed.
+                  // Example: Scratch.vm.runtime.emit('LOGIN_SUCCESS', this.user);
+
+                } catch (e) {
+                  console.error("Error processing received user data:", e);
+                  // If processing fails, perhaps set user to null or handle the error
+                  this.user = null; // Prevent assigning potentially bad data
+                }
+              } else {
+                 // Handle the case where the user data is null (e.g., sign out message)
+                 this.user = null;
+                 console.log("Received null user data (sign out).");
+              }
+              // --- END IMPROVED DATA HANDLING ---
+
             }
           } else {
             console.warn("Received message from untrusted origin:", event.origin);
@@ -208,4 +240,3 @@
   document.head.appendChild(script);
 
 })(Scratch);
-

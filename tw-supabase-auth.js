@@ -1,243 +1,269 @@
-// TurboWarp Extension for Supabase Google Authentication via Popup
-// This extension opens a popup window for the Google OAuth flow
-// and receives the user session data back via postMessage.
-// Supabase URL and Anon Key are configured as constants here.
+(function(Scratch) {
+  'use strict';
 
-(function (Scratch) {
-  // --- Configuration ---
-  // Replace with your actual Supabase Project URL and Anon Key
-  // These are now constants in the extension code again.
-  const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // Your project URL
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
+  // Replace with your Supabase project URL and anon key
+  const SUPABASE_URL = 'https://gxqbrcutslyybxexvszr.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU';
 
-  // Replace with the EXACT URL where you host your login.html file
-  // This URL is used in window.open() to launch the popup.
-  // This page MUST be hosted online (e.g., GitHub Pages) for the OAuth redirect to work.
-  const LOGIN_PAGE_URL = "https://colebohte.github.io/river-services/login.html"; // e.g., "https://colebohte.github.io/river-services/login.html"
+  // Supabase client instance (initialized later)
+  let supabase = null;
 
-  // IMPORTANT: Set this to the EXACT origin of the window running your TurboWarp project.
-  // This is crucial for security in postMessage.
-  // - If using turbowarp.org editor: "https://turbowarp.org"
-  // - If embedding on your own web page: "https://your-embedding-domain.com" (e.g., "https://colebohte.github.io")
-  // - If running in Electron or TurboWarp Desktop: "file://"
-  // This value MUST match the targetOrigin set in your login.html file.
-  const TURBOWARP_ORIGIN = "file://"; // <--- Set this based on your target environment!
+  // Internal state to store user data
+  let currentUser = null;
+  let isLoggedIn = false;
 
-  // --- Supabase Client Initialization ---
-  const script = document.createElement("script");
-  script.src = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js";
-  script.onload = () => {
-    // Initialize the Supabase client once the script is loaded
-    // using the constants defined above.
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // Flag to ensure Supabase client is initialized only once
+  let isSupabaseInitialized = false;
 
-    // --- TurboWarp Extension Definition ---
-    class SupabaseAuthExtension {
-      constructor() {
-        this.user = null; // Stores the logged-in user object
-        // The supabase client instance is now initialized outside the constructor
+  // Function to initialize Supabase client
+  function initializeSupabase() {
+      if (!isSupabaseInitialized) {
+          try {
+              supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+              isSupabaseInitialized = true;
+              console.log("Supabase client initialized.");
 
-        // Listen for messages from the popup window
-        // The login.html page will send the user data back using postMessage
-        window.addEventListener("message", (event) => {
-          // --- DEBUG LOGGING START ---
-          console.log("Extension received message:", event);
-          if (event.data) {
-            console.log("Message data type:", event.data.type);
-            console.log("Message data user (raw):", event.data.user); // Log raw user data
-             // Note: In this version of login.html, loginPageUrlUsed is NOT sent,
-             // so we cannot perform the origin check based on it.
-             // We will rely solely on event.origin matching LOGIN_PAGE_URL's origin.
-          } else {
-            console.warn("Message event.data is null or undefined.");
-          }
-          // --- DEBUG LOGGING END ---
-
-
-          // IMPORTANT: Verify the origin of the message for security!
-          // Ensure the message is coming from your trusted login page origin.
-          // This origin check now uses the LOGIN_PAGE_URL constant.
-          if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
-            // Origin matches the expected login page origin
-            if (event.data && event.data.type === "supabase-auth") {
-              // Message type is correct
-              let receivedUser = event.data.user;
-              if (receivedUser) {
-                try {
-                  // Attempt to stringify and parse the user object
-                  // This can help clean up some data issues
-                  receivedUser = JSON.parse(JSON.stringify(receivedUser));
-                  console.log("Parsed user data:", receivedUser); // Log parsed data
-
-                  // Log specific properties that might cause issues
-                  console.log("Parsed user ID:", receivedUser.id);
-                  console.log("Parsed user email:", receivedUser.email);
-                  console.log("Parsed user metadata:", receivedUser.user_metadata);
-                  if (receivedUser.user_metadata) {
-                      console.log("Parsed user full_name:", receivedUser.user_metadata.full_name);
-                      console.log("Parsed user avatar_url:", receivedUser.user_metadata.avatar_url);
-                  }
-
-                  // Assign the potentially cleaned user data
-                  this.user = receivedUser;
-                  console.log("Supabase user data assigned to extension."); // Log after assignment
-
-                  // You could add a custom event or broadcast a Scratch message here
-                  // to notify your Scratch project that the user state has changed.
-                  // Example: Scratch.vm.runtime.emit('LOGIN_SUCCESS', this.user);
-
-                } catch (e) {
-                  console.error("Error processing received user data:", e);
-                  // If processing fails, perhaps set user to null or handle the error
-                  this.user = null; // Prevent assigning potentially bad data
+              // Listen for auth state changes (optional but good practice)
+              supabase.auth.onAuthStateChange((event, session) => {
+                console.log("Supabase auth state change:", event, session);
+                if (event === 'SIGNED_IN' && session) {
+                    handleLoginSuccess(session.user);
+                } else if (event === 'SIGNED_OUT') {
+                    handleLogout();
                 }
-              } else {
-                 // Handle the case where the user data is null (e.g., sign out message)
-                 this.user = null;
-                 console.log("Received null user data (sign out).");
-              }
-            } else {
-                console.warn("Received message from correct origin but with incorrect type or missing data:", event.data);
-            }
-          } else {
-            console.warn("Received message from untrusted origin:", event.origin, "Expected origin:", new URL(LOGIN_PAGE_URL).origin);
+              });
+
+              // Check initial session status on load
+              checkSession();
+
+          } catch (e) {
+              console.error("Error initializing Supabase client:", e);
+              // Handle initialization error, maybe set an internal status
           }
-        });
-
-         // Check for an existing session when the extension loads
-         // This now happens after the Supabase client is initialized in script.onload
-         supabase.auth.getSession().then(({ data: { session } }) => {
-            if (session) {
-              this.user = session.user;
-              console.log("Existing Supabase session found on load."); // Simplified log
-            }
-         }).catch(err => {
-             console.error("Error checking initial session:", err);
-         });
-
-        // Listen for auth state changes (primarily for sign-out if implemented elsewhere)
-        // This is now attached after the Supabase client is initialized in script.onload
-        supabase.auth.onAuthStateChange((_event, session) => {
-           if (_event === 'SIGNED_OUT') {
-               this.user = null;
-               console.log("User signed out."); // Simplified log
-           }
-        });
       }
+  }
 
-      // --- Extension Block Definitions ---
-      getInfo() {
-        return {
-          id: "supabaseAuth", // Unique ID for the extension
-          name: "Supabase Auth", // Display name in TurboWarp
-          color1: "#3ECF8E", // Supabase green color for blocks
-          blocks: [
-            {
-              opcode: "signIn", // Original opcode for Google sign-in
-              blockType: Scratch.BlockType.COMMAND, // Command block (runs an action)
-              text: "sign in with Google", // Original text
-              // No arguments needed here as config is constants
-            },
-            {
-              opcode: "getEmail",
-              blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
-              text: "user email"
-            },
-            {
-              opcode: "getUID",
-              blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
-              text: "user UID"
-            },
-             { // Add block to get user's full name from metadata
-              opcode: "getFullName",
-              blockType: Scratch.BlockType.REPORTER,
-              text: "user full name"
-            },
-             { // Add block to get user's avatar URL from metadata
-              opcode: "getAvatarURL",
-              blockType: Scratch.BlockType.REPORTER,
-              text: "user avatar URL"
-            },
-             { // Add block to check if the user is logged in
-              opcode: "isLoggedIn",
-              blockType: Scratch.BlockType.BOOLEAN, // Boolean block (returns true/false)
-              text: "is logged in?"
-            },
-             { // Add a sign out block
-              opcode: "signOut",
-              blockType: Scratch.BlockType.COMMAND, // Command block
-              text: "sign out"
-            }
-          ]
-        };
+  // Check for an existing session
+  async function checkSession() {
+      if (!supabase) {
+          console.error("Supabase client not initialized when checking session.");
+          return;
       }
-
-      // --- Block Implementations ---
-
-      // Implementation for the "sign in with Google" command block
-      // Now uses the constants defined at the top and doesn't pass provider.
-      signIn() { // Original function name
-        // Open the login.html page
-        // Pass constants as query params (although login.html might not read them in this version)
-        window.open(
-          LOGIN_PAGE_URL, // Use the defined URL for your login.html
-          "_blank", // Open in a new blank tab/window
-          "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
-        );
-        // Note: The actual Supabase signInWithOAuth call happens inside login.html
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+          console.error("Error checking session:", error);
+          handleLogout(); // Assume logged out on error
+      } else if (data.session) {
+          handleLoginSuccess(data.session.user);
+      } else {
+          handleLogout(); // No session found
       }
+  }
 
-      // Implementation for the "user email" reporter block
-      getEmail() {
-        // Return the email from the stored user object, or an empty string if not logged in
-        return this.user?.email ?? "";
+
+  // Handle successful login (called internally or by message listener)
+  function handleLoginSuccess(user) {
+      console.log("Handling login success for user:", user);
+      currentUser = user;
+      isLoggedIn = true;
+      // Trigger Scratch event/update if possible (depends on Scratch 3.0 extension API details)
+      // For now, state is updated, reporters will reflect it.
+  }
+
+  // Handle logout
+  function handleLogout() {
+      console.log("Handling logout.");
+      currentUser = null;
+      isLoggedIn = false;
+  }
+
+
+  // Listen for messages from the login window
+  window.addEventListener('message', (event) => {
+      // IMPORTANT: Verify the origin of the message in production!
+      // if (event.origin !== 'https://yourusername.github.io') {
+      //     console.warn('Received message from unknown origin:', event.origin);
+      //     return;
+      // }
+
+      const data = event.data;
+      if (data && data.type === 'supabaseAuthResult') {
+          console.log("Received auth result message:", data);
+          if (data.success) {
+              handleLoginSuccess(data.user);
+          } else {
+              console.error("Auth flow reported failure:", data.error);
+              handleLogout(); // Ensure state is logged out on failure
+          }
       }
-
-      // Implementation for the "user UID" reporter block
-      getUID() {
-        // Return the UID from the stored user object, or an empty string if not logged in
-        return this.user?.id ?? "";
-      }
-
-      // Implementation for the "user full name" reporter block
-      getFullName() {
-        // Return the full name from user_metadata, or an empty string
-        return this.user?.user_metadata?.full_name ?? "";
-      }
-
-      // Implementation for the "user avatar URL" reporter block
-      getAvatarURL() {
-        // Return the avatar URL from user_metadata, or an empty string
-        return this.user?.user_metadata?.avatar_url ?? "";
-      }
+  });
 
 
-      // Implementation for the "is logged in?" boolean block
-      isLoggedIn() {
-         // Return true if the user object is not null, false otherwise
-         return this.user !== null;
-      }
+  class SupabaseAuthExtension {
+    getInfo() {
+      // Initialize Supabase client when Scratch requests extension info
+      initializeSupabase();
 
-       // Implementation for the "sign out" command block
-       async signOut() {
-         // Ensure Supabase client is initialized before signing out
-         // The client is now initialized in script.onload, so it should exist.
-           const { error } = await supabase.auth.signOut(); // Use the 'supabase' variable from script.onload scope
-           if (!error) {
-              this.user = null; // Clear local user state on successful sign out
-              console.log("User signed out successfully."); // Log for debugging
-               // You might want to broadcast a Scratch message here to update UI
-           } else {
-              console.error("Sign out failed:", error.message); // Log error
-           }
-       }
+      return {
+        id: 'twSupabaseAuth',
+        name: 'Supabase Auth',
+        blocks: [
+          {
+            opcode: 'loginWithGoogle',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'log in with Google',
+          },
+           {
+            opcode: 'logout',
+            blockType: Scratch.BlockType.COMMAND,
+            text: 'log out',
+          },
+          '---', // Separator
+          {
+            opcode: 'isLoggedIn',
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: 'is logged in?',
+          },
+          {
+            opcode: 'isEmailVerified',
+            blockType: Scratch.BlockType.BOOLEAN,
+            text: 'is email verified?',
+          },
+          {
+            opcode: 'getUserId',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'user ID',
+          },
+          {
+            opcode: 'getUserEmail',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'user email',
+          },
+           {
+            opcode: 'getUserFullName',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'user full name',
+          },
+          {
+            opcode: 'getUserShortName',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'user short name', // Assuming first name
+          },
+           {
+            opcode: 'getUserPfpUrl',
+            blockType: Scratch.BlockType.REPORTER,
+            text: 'user profile picture URL (256px)',
+          },
+          // Add other reporters here as needed
+        ],
+        // Optional: Add categories, colors, etc.
+        // category: 'data', // Example category
+        // color1: '#0079f2', // Example color
+      };
     }
 
-    // Register the extension with Scratch/TurboWarp
-    Scratch.extensions.register(new SupabaseAuthExtension());
-  };
+    // Command block to initiate login
+    loginWithGoogle() {
+        // Replace with the URL where your login.html is hosted on GitHub Pages
+        const loginPageUrl = 'https://yourusername.github.io/your-repo/login.html';
+        // Open login.html in a new window
+        window.open(loginPageUrl, '_blank', 'width=600,height=700');
+         // Note: The extension itself doesn't handle the redirect; login.html does.
+         // We just open the window and wait for a postMessage.
+    }
 
-  // Append the Supabase script to the document head to load it
-  document.head.appendChild(script);
+    // Command block to initiate logout
+    async logout() {
+        if (!supabase) {
+             console.error("Supabase client not initialized for logout.");
+             return;
+        }
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error("Error during logout:", error);
+        } else {
+            console.log("User signed out.");
+            handleLogout(); // Update internal state
+        }
+    }
+
+
+    // Reporter blocks
+
+    isLoggedIn() {
+      return isLoggedIn;
+    }
+
+    isEmailVerified() {
+        // Supabase user object from OAuth should have email_verified in user_metadata
+        // Or sometimes directly on the user object depending on provider and Supabase version
+        return currentUser ? (currentUser.email_verified || currentUser.user_metadata.email_verified || false) : false;
+    }
+
+    getUserId() {
+      return currentUser ? currentUser.id : '';
+    }
+
+    getUserEmail() {
+      return currentUser ? currentUser.email : '';
+    }
+
+    getUserFullName() {
+       // Assuming Google provides full_name in user_metadata
+      return currentUser ? (currentUser.user_metadata.full_name || '') : '';
+    }
+
+     getUserShortName() {
+        // Assuming short name is the first name from full_name
+        const fullName = this.getUserFullName(); // Use the existing reporter logic
+        if (fullName) {
+            return fullName.split(' ')[0] || '';
+        }
+        return '';
+    }
+
+
+    getUserPfpUrl() {
+        // Assuming Google provides avatar_url in user_metadata
+        const avatarUrl = currentUser ? (currentUser.user_metadata.avatar_url || '') : '';
+        if (avatarUrl) {
+            // Attempt to change Google's size parameter from s96-c (common) to s256-c
+            try {
+                const url = new URL(avatarUrl);
+                 // Check if it's a googleusercontent.com URL which often uses this parameter
+                if (url.hostname.includes('googleusercontent.com')) {
+                    const sizeParam = url.searchParams.get('s');
+                    if (sizeParam) {
+                        url.searchParams.set('s', '256'); // Change size to 256
+                        // Keep the -c if it was present
+                         if (sizeParam.includes('-c')) {
+                              url.searchParams.set('c', ''); // Add 'c' param if needed
+                         }
+                        return url.toString();
+                    }
+                     // If no 's' parameter, just return the original URL
+                     return avatarUrl;
+                } else {
+                     // Not a recognized Google URL format, return original
+                    return avatarUrl;
+                }
+            } catch (e) {
+                console.error("Error processing avatar URL:", e);
+                return avatarUrl; // Return original on error
+            }
+        }
+        return '';
+    }
+
+
+    // Add other block implementations here
+  }
+
+   // Check if Scratch is defined before registering
+    if (typeof Scratch !== 'undefined') {
+        Scratch.extensions.register(new SupabaseAuthExtension());
+    } else {
+        console.error("Scratch environment not found. Could not register extension.");
+    }
 
 })(Scratch);

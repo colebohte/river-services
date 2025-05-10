@@ -1,11 +1,13 @@
 // TurboWarp Extension for Supabase Google Authentication via Popup
 // This extension opens a popup window for the Google OAuth flow
 // and receives the user session data back via postMessage.
+// Supabase URL and Anon Key are configured as constants here.
 
 (function (Scratch) {
   // --- Configuration ---
   // Replace with your actual Supabase Project URL and Anon Key
-  const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // e.g., "https://gxqbrcutslyybxexvszr.supabase.co"
+  // These are now constants in the extension code again.
+  const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // Your project URL
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
 
   // Replace with the EXACT URL where you host your login.html file
@@ -18,8 +20,8 @@
   // - If using turbowarp.org editor: "https://turbowarp.org"
   // - If embedding on your own web page: "https://your-embedding-domain.com" (e.g., "https://colebohte.github.io")
   // - If running in Electron or TurboWarp Desktop: "file://"
+  // This value MUST match the targetOrigin set in your login.html file.
   const TURBOWARP_ORIGIN = "file://"; // <--- Set this based on your target environment!
-
 
   // --- Supabase Client Initialization ---
   const script = document.createElement("script");
@@ -43,11 +45,9 @@
           if (event.data) {
             console.log("Message data type:", event.data.type);
             console.log("Message data user (raw):", event.data.user); // Log raw user data
-            if (event.data.loginPageUrlUsed) {
-              console.log("Message data loginPageUrlUsed:", event.data.loginPageUrlUsed);
-            } else {
-              console.warn("Message data missing loginPageUrlUsed property.");
-            }
+             // Note: In this version of login.html, loginPageUrlUsed is NOT sent,
+             // so we cannot perform the origin check based on it.
+             // We will rely solely on event.origin matching LOGIN_PAGE_URL's origin.
           } else {
             console.warn("Message event.data is null or undefined.");
           }
@@ -58,8 +58,9 @@
           // Ensure the message is coming from your trusted login page origin.
           // This origin check now uses the LOGIN_PAGE_URL constant.
           if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
+            // Origin matches the expected login page origin
             if (event.data && event.data.type === "supabase-auth") {
-              // --- IMPROVED DATA HANDLING ---
+              // Message type is correct
               let receivedUser = event.data.user;
               if (receivedUser) {
                 try {
@@ -95,11 +96,11 @@
                  this.user = null;
                  console.log("Received null user data (sign out).");
               }
-              // --- END IMPROVED DATA HANDLING ---
-
+            } else {
+                console.warn("Received message from correct origin but with incorrect type or missing data:", event.data);
             }
           } else {
-            console.warn("Received message from untrusted origin:", event.origin);
+            console.warn("Received message from untrusted origin:", event.origin, "Expected origin:", new URL(LOGIN_PAGE_URL).origin);
           }
         });
 
@@ -132,10 +133,10 @@
           color1: "#3ECF8E", // Supabase green color for blocks
           blocks: [
             {
-              opcode: "signIn", // Reverted opcode
+              opcode: "signIn", // Original opcode for Google sign-in
               blockType: Scratch.BlockType.COMMAND, // Command block (runs an action)
-              text: "sign in with Google", // Reverted text (no arguments needed here)
-              // Remove arguments property as config is now constants
+              text: "sign in with Google", // Original text
+              // No arguments needed here as config is constants
             },
             {
               opcode: "getEmail",
@@ -174,12 +175,12 @@
       // --- Block Implementations ---
 
       // Implementation for the "sign in with Google" command block
-      // Now uses the constants defined at the top.
-      signIn() { // Reverted function name and removed args parameter
+      // Now uses the constants defined at the top and doesn't pass provider.
+      signIn() { // Original function name
         // Open the login.html page
-        // Pass constants and provider as query params
+        // Pass constants as query params (although login.html might not read them in this version)
         window.open(
-          `${LOGIN_PAGE_URL}?supabaseUrl=${encodeURIComponent(SUPABASE_URL)}&supabaseKey=${encodeURIComponent(SUPABASE_ANON_KEY)}&turbowarpOrigin=${encodeURIComponent(TURBOWARP_ORIGIN)}&provider=google`, // Pass constants and provider
+          LOGIN_PAGE_URL, // Use the defined URL for your login.html
           "_blank", // Open in a new blank tab/window
           "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
         );

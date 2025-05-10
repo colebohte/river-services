@@ -25,6 +25,7 @@
     async function handleAuthCallback() {
       console.log("Handling auth callback...");
       // Get the session data from the URL or local storage after redirect
+      // This is where Supabase processes the response from Google
       const { data, error } = await supabase.auth.getSession();
 
       if (error) {
@@ -75,14 +76,15 @@
     // Function to initiate the Google OAuth login redirect
     async function initiateLogin() {
          // !!! IMPORTANT: Replace with the exact URL where this login.html file is hosted on GitHub Pages !!!
+         // This is the URL that Supabase will redirect the user back to AFTER Google authentication.
+         // This MUST match a URI configured in your Supabase Auth settings for the Google provider.
          const redirectUrl = 'https://colebohte.github.io/river-services/login.html';
          console.log("Initiating login redirect to Google via Supabase...");
 
          const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                // Specify the redirect URI where Supabase should send the user back AFTER Google authentication.
-                // This MUST match a URI configured in your Supabase Auth settings for the Google provider.
+                // Specify the redirect URI for Supabase to send the user back to
                 redirectTo: redirectUrl,
                 // You can request specific scopes if needed, though 'email' and 'profile' are often default
                 // scopes: 'email profile'
@@ -97,7 +99,8 @@
              }
          }
          // Note: signInWithOAuth redirects the user's browser away from this page,
-         // so code after this line will not execute immediately.
+         // so code after this line will not execute immediately unless there was an error
+         // before the redirect could happen.
     }
 
     // When the page loads, first check if a session already exists.

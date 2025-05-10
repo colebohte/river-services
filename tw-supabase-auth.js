@@ -7,7 +7,6 @@
 
 (function (Scratch) {
   // --- Configuration ---
-@@ -11,16 +12,18 @@
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
 
   // Replace with the EXACT URL where you host your login.html file
@@ -30,7 +29,6 @@
 
   // --- Supabase Client Initialization ---
   const script = document.createElement("script");
-@@ -34,11 +37,11 @@
       constructor() {
         this.user = null; // Stores the logged-in user object
 
@@ -44,7 +42,6 @@
           // This origin check remains based on the hosted login.html URL.
           if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
             if (event.data && event.data.type === "supabase-auth") {
-@@ -93,16 +96,16 @@
               opcode: "signIn",
               blockType: Scratch.BlockType.COMMAND, // Command block (runs an action)
               text: "sign in with Google"
@@ -66,7 +63,6 @@
             },
             // --- Categorized User Data Blocks ---
             { // Label block for categorization
-@@ -137,22 +140,22 @@
             },
             {
               opcode: "getFullName",
@@ -93,7 +89,6 @@
               text: "region"
             },
             {
-@@ -176,8 +179,25 @@
           "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
         );
         // Note: The actual Supabase signInWithOAuth call happens inside login.html
@@ -119,7 +114,6 @@
       // Implementation for the "user email" reporter block
       getEmail() {
         // Return the email from the stored user object, or an empty string if not logged in
-@@ -196,93 +216,80 @@
          return this.user !== null;
       }
 

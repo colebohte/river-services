@@ -13,7 +13,7 @@
   <div id="status"></div>
 
   <script>
-    // Replace with your Supabase project URL and anon key
+    // !!! IMPORTANT: Replace with your actual Supabase project URL and anon key !!!
     const SUPABASE_URL = 'https://gxqbrcutslyybxexvszr.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU';
 
@@ -24,11 +24,13 @@
 
       if (error) {
         console.error('Supabase auth error:', error);
-        document.getElementById('status').innerText = 'Login failed.';
+        document.getElementById('status').innerText = 'Login failed: ' + error.message;
         // Optionally send error back to opener
         if (window.opener) {
-            window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*'); // Use a specific origin in production!
+            // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
+            window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*');
         }
+        // Do not close on error immediately, allow user to see message
       } else if (data.session) {
         console.log('Supabase session received:', data.session);
         document.getElementById('status').innerText = 'Login successful. Returning to Scratch...';
@@ -47,51 +49,61 @@
               // Add other metadata you might need
             }
           };
-          window.opener.postMessage(userData, '*'); // Use a specific origin in production!
+          // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
+          window.opener.postMessage(userData, '*');
           // Close this window after a short delay
           setTimeout(() => window.close(), 1000);
         } else {
-             document.getElementById('status').innerText = 'Login successful, but could not communicate back to Scratch.';
+             document.getElementById('status').innerText = 'Login successful, but could not communicate back to Scratch (window.opener not found).';
         }
       } else {
          // This might happen on initial load before redirect or if no session is found
-         document.getElementById('status').innerText = 'No active session found. Redirecting to login...';
+         document.getElementById('status').innerText = 'No active session found or session data is incomplete. Redirecting to login...';
          // Initiate the login redirect if no session
          initiateLogin();
       }
     }
 
     async function initiateLogin() {
+         // !!! IMPORTANT: Replace with the exact URL where this login.html file is hosted on GitHub Pages !!!
+         const redirectUrl = 'https://colebohte.github.io/river-services/login.html';
+
          const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
                 // Specify the redirect URI where Supabase should send the user back
-                // This should match a URI configured in your Supabase Auth settings
-                redirectTo: window.location.href // Redirect back to this same page to handle the session
+                // This must match a URI configured in your Supabase Auth settings
+                redirectTo: redirectUrl
             }
          });
          if (error) {
              console.error('Error initiating OAuth:', error);
-             document.getElementById('status').innerText = 'Error initiating login.';
+             document.getElementById('status').innerText = 'Error initiating login: ' + error.message;
              if (window.opener) {
-                 window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*'); // Use a specific origin!
+                 // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
+                 window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*');
              }
          }
+         // Note: signInWithOAuth redirects the user, so code after this won't run immediately
     }
 
-    // Check for session immediately when the page loads (in case of redirect)
-    // If no session, initiate the login flow.
+    // When the page loads, check if a session exists (happens after Google redirects back to this page)
+    // If no session exists, initiate the login flow by redirecting to Google.
     supabase.auth.getSession().then(({ data }) => {
         if (data.session) {
-            handleAuthCallback(); // Session found, process it
+            // If a session is found (meaning we were redirected back here after login)
+            handleAuthCallback();
         } else {
-            initiateLogin(); // No session, start login
+            // No session found, meaning the user clicked the login block and landed here initially
+            console.log("No session found, initiating login redirect.");
+            initiateLogin();
         }
     }).catch(err => {
-         console.error('Error checking session:', err);
-         document.getElementById('status').innerText = 'Error checking session.';
+         console.error('Error checking initial session:', err);
+         document.getElementById('status').innerText = 'Error checking initial session.';
           if (window.opener) {
-             window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: err.message }, '*'); // Use a specific origin!
+              // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
+             window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: err.message }, '*');
          }
     });
 

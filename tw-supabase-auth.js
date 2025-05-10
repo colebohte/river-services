@@ -37,14 +37,31 @@
         // Listen for messages from the popup window
         // The login.html page will send the user data back using postMessage
         window.addEventListener("message", (event) => {
+          // --- DEBUG LOGGING START ---
+          console.log("Extension received message:", event);
+          if (event.data) {
+            console.log("Message data type:", event.data.type);
+            console.log("Message data user:", event.data.user);
+            if (event.data.loginPageUrlUsed) {
+              console.log("Message data loginPageUrlUsed:", event.data.loginPageUrlUsed);
+            } else {
+              console.warn("Message data missing loginPageUrlUsed property.");
+            }
+          } else {
+            console.warn("Message event.data is null or undefined.");
+          }
+          // --- DEBUG LOGGING END ---
+
+
           // IMPORTANT: Verify the origin of the message for security!
           // Ensure the message is coming from your trusted login page origin.
           // This origin check now uses the LOGIN_PAGE_URL constant.
           if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
             if (event.data && event.data.type === "supabase-auth") {
               // Update the user data when received from the popup
+              // This is the line that might trigger the VM error when assigning event.data.user
               this.user = event.data.user;
-              console.log("Supabase user data received."); // Simplified log
+              console.log("Supabase user data assigned to extension."); // Log after assignment
               // You could add a custom event or broadcast a Scratch message here
               // to notify your Scratch project that the user state has changed.
               // Example: Scratch.vm.runtime.emit('LOGIN_SUCCESS', this.user);
@@ -59,7 +76,7 @@
          supabase.auth.getSession().then(({ data: { session } }) => {
             if (session) {
               this.user = session.user;
-              console.log("Existing Supabase session found."); // Simplified log
+              console.log("Existing Supabase session found on load."); // Simplified log
             }
          }).catch(err => {
              console.error("Error checking initial session:", err);
@@ -191,3 +208,4 @@
   document.head.appendChild(script);
 
 })(Scratch);
+

@@ -1,130 +1,114 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Supabase Auth Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
-    /* Basic styling to show loading or status */
-    body { font-family: sans-serif; text-align: center; padding-top: 50px; }
-    #status { margin-top: 20px; color: #333; }
+    body {
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #f0f0f0;
+      margin: 0;
+    }
+    #status {
+      font-size: 1.2em;
+      color: #555;
+    }
   </style>
 </head>
 <body>
-  <p>Attempting to log in...</p>
-  <div id="status"></div>
+  <p id="status">Attempting to log in...</p>
 
   <script>
-    // !!! IMPORTANT: Replace with your actual Supabase project URL and anon key !!!
-    const SUPABASE_URL = 'https://gxqbrcutslyybxexvszr.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU';
+    // Correctly initialize the Supabase client using window.supabase
+    const supabase = window.supabase.createClient(
+      "https://gxqbrcutslyybxexvszr.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU" // Your anon key
+    );
 
-    // Create the Supabase client instance
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Listen for authentication state changes
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Auth state changed in popup:", event, "session:", session); // Log for debugging
+      const statusElement = document.getElementById('status');
 
-    // Function to handle the authentication callback after redirect
-    async function handleAuthCallback() {
-      console.log("Handling auth callback...");
-      // Get the session data from the URL or local storage after redirect
-      // This is where Supabase processes the response from Google
-      const { data, error } = await supabase.auth.getSession();
+      if (event === 'SIGNED_IN' && session) {
+        statusElement.innerText = 'Signed in. Returning to app...';
+        console.log("User signed in, sending message to opener..."); // Log for debugging
 
-      if (error) {
-        console.error('Supabase auth error:', error);
-        document.getElementById('status').innerText = 'Login failed: ' + error.message;
-        // Send error message back to the window that opened this one (the Scratch environment)
+        // Send the user data back to the window that opened this popup
+        // IMPORTANT: Replace '*' with the specific origin of your TurboWarp window
+        // For TurboWarp editor, use 'https://turbowarp.org'
+        // If embedding, use the origin of your embedding page (e.g., 'https://your-username.github.io')
         if (window.opener) {
-            // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
-            window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*');
-        }
-        // Do not close on error immediately, allow user to see the error message
-      } else if (data.session && data.session.user) {
-        console.log('Supabase session received:', data.session);
-        document.getElementById('status').innerText = 'Login successful. Returning to Scratch...';
-        // Send user data back to the window that opened this one (the Scratch environment)
-        if (window.opener) {
-          const user = data.session.user;
-          // Structure the user data to send back to the extension
-          const userData = {
-            type: 'supabaseAuthResult', // Identifier for the message type
-            success: true,
-            user: {
-              id: user.id,
-              email: user.email,
-              full_name: user.user_metadata.full_name || '', // Assuming Google provides full_name in metadata
-              avatar_url: user.user_metadata.avatar_url || '', // Assuming Google provides avatar_url in metadata
-              email_verified: user.email_verified || false, // Assuming Google provides email_verified
-              locale: user.user_metadata.locale || '', // Assuming locale might be in metadata (often not)
-              // Add other metadata you might need from user.user_metadata
-            }
-          };
-          // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
-          window.opener.postMessage(userData, '*');
-          // Close this window after a short delay to allow the message to be processed
-          setTimeout(() => window.close(), 1000);
+           window.opener.postMessage({
+             type: "supabase-auth",
+             user: session.user
+           }, "https://turbowarp.org"); // <-- Set the correct targetOrigin here!
+           console.log("Message sent, closing popup..."); // Log for debugging
+           window.close(); // Close the popup after sending the data
         } else {
-             document.getElementById('status').innerText = 'Login successful, but could not communicate back to Scratch (window.opener not found).';
+           statusElement.innerText = 'Signed in. No opener window found.';
+           statusElement.innerText = 'Signed in. User data request failed: No opener window found';
+           console.warn("No opener window found to send message to."); // Log if no opener
         }
-      } else {
-         // This might happen on initial load before redirect or if session data is incomplete
-         console.log("No active session found or session data incomplete after callback.");
-         document.getElementById('status').innerText = 'No active session found or data incomplete. Redirecting to login...';
-         // If no session is found after the callback, it means the initial redirect didn't happen yet
-         initiateLogin(); // Initiate the login redirect flow
-      }
-    }
 
-    // Function to initiate the Google OAuth login redirect
-    async function initiateLogin() {
-         // !!! IMPORTANT: Replace with the exact URL where this login.html file is hosted on GitHub Pages !!!
-         // This is the URL that Supabase will redirect the user back to AFTER Google authentication.
-         // This MUST match a URI configured in your Supabase Auth settings for the Google provider.
-         const redirectUrl = 'https://colebohte.github.io/river-services/login.html';
-         console.log("Initiating login redirect to Google via Supabase...");
-
-         const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                // Specify the redirect URI for Supabase to send the user back to
-                redirectTo: redirectUrl,
-                // You can request specific scopes if needed, though 'email' and 'profile' are often default
-                // scopes: 'email profile'
-            }
-         });
-         if (error) {
-             console.error('Error initiating OAuth:', error);
-             document.getElementById('status').innerText = 'Error initiating login: ' + error.message;
-             if (window.opener) {
-                 // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
-                 window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*');
+              console.log("Initial session message sent, closing popup..."); // Log for debugging
+              window.close(); // Close the popup
+           } else {
+               statusElement.innerText = 'Already signed in. No opener window found.';
+               statusElement.innerText = 'Already signed in. User data request failed: No opener window found.';
+               console.warn("No opener window found for initial session."); // Log if no opener
+           }
+      } else if (event === 'INITIAL_SESSION' && !session) {
+          // If no session initially, proceed to trigger the login
+          statusElement.innerText = 'Redirecting to Google...';
+           // Trigger Google login
+           supabase.auth.signInWithOAuth({
+             provider: "google",
+             options: {
+               // This must be the URL of THIS login.html page
+               redirectTo: "https://colebohte.github.io/river-services/login.html"
              }
-         }
-         // Note: signInWithOAuth redirects the user's browser away from this page,
-         // so code after this line will not execute immediately unless there was an error
-         // before the redirect could happen.
-    }
-
-    // When the page loads, first check if a session already exists.
-    // This happens if the user was redirected back to this page after successfully logging in with Google.
-    // If no session is found, it means the user just opened this page by clicking the Scratch block,
-    // and we need to initiate the login redirect to Google.
-    supabase.auth.getSession().then(({ data }) => {
-        if (data.session && data.session.user) {
-            // If a session is found (meaning we were redirected back here after login)
-            console.log("Initial session found on page load.");
-            handleAuthCallback(); // Process the session and send data back
-        } else {
-            // No session found, meaning the user just opened this page.
-            console.log("No initial session found on page load. Initiating login.");
-            initiateLogin(); // Start the OAuth flow by redirecting to Google
-        }
-    }).catch(err => {
-         console.error('Error checking initial session on page load:', err);
-         document.getElementById('status').innerText = 'Error checking initial session.';
-          if (window.opener) {
-              // !!! IMPORTANT: Replace '*' with the specific origin of your Scratch environment (e.g., 'https://turbowarp.org') in production !!!
-             window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: err.message }, '*');
-         }
+           }).then(({ data, error }) => {
+               if (error) {
+                   console.error("OAuth sign in failed:", error); // Log error
+                   statusElement.innerText = 'Login failed: ' + error.message;
+               }
+               // Note: data will be null here because signInWithOAuth causes a redirect
+           });
+      }
     });
+
+    // Also handle cases where the page is loaded directly (e.g., after Google redirect)
+    // The onAuthStateChange listener for 'INITIAL_SESSION' should catch this,
+    // but checking getSession directly is a good fallback/initial check.
+     supabase.auth.getSession().then(({ data: { session } }) => {
+         if (session) {
+             console.log("Session found on direct load, sending to opener..."); // Log for debugging
+              const statusElement = document.getElementById('status');
+               statusElement.innerText = 'Session found. Returning to app...';
+              if (window.opener) {
+                 window.opener.postMessage(
+                    { type: "supabase-auth", user: session.user },
+                    "https://colebohte.github.io/river-services/login.html" // <-- Set the correct targetOrigin here!
+                );
+                console.log("Session found message sent, closing popup..."); // Log for debugging
+                window.close(); // Close the popup
+             } else {
+                 statusElement.innerText = 'Session found on direct load. No opener window found.';
+                 console.warn("No opener window found for session on direct load."); // Log if no opener
+             }
+         } else {
+              // If no session found initially, the onAuthStateChange listener will handle starting the flow
+              console.log("No session found on direct load, waiting for onAuthStateChange..."); // Log for debugging
+         }
+     }).catch(err => {
+         console.error("Error checking session on load:", err); // Log error
+         document.getElementById('status').innerText = 'Error checking session: ' + err.message;
+     });
 
 
   </script>

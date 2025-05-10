@@ -1,134 +1,101 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <style>
-        body {
-            font-family: sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #f0f0f0;
-            margin: 0;
-            text-align: center; /* Center text */
-            padding: 20px; /* Add some padding */
-        }
-        #status {
-            font-size: 1.2em;
-            color: #555;
-        }
-        /* Basic styling for potential errors */
-        .error {
-            color: red;
-            font-weight: bold;
-        }
-    </style>
+  <title>Supabase Auth Login</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* Basic styling to show loading or status */
+    body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+  </style>
 </head>
 <body>
-    <div id="status">Attempting to log in...</div>
+  <p>Attempting to log in...</p>
+  <div id="status"></div>
 
-    <script>
-        // --- Configuration ---
-        // Replace with your actual Supabase URL and Anon Key
-        // These are hardcoded in this version.
-        const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // Your project URL
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your anon key
+  <script>
+    // Replace with your Supabase project URL and anon key
+    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-        // IMPORTANT: Set the targetOrigin to the EXACT origin of the window
-        // that opened this popup (your TurboWarp/Electron window).
-        // This MUST match the TURBOWARP_ORIGIN variable in your extension JS file.
-        // - If opened by turbowarp.org: "https://turbowarp.org"
-        // - If opened by your embedding page: "https://your-embedding-domain.com"
-        // - If opened by Electron or TurboWarp Desktop: "file://"
-        const targetOrigin = "file://"; // <--- Set this based on your target environment!
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- Supabase Client Initialization ---
-        // Client is initialized directly using the hardcoded constants.
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        const statusElement = document.getElementById('status');
+    async function handleAuthCallback() {
+      const { data, error } = await supabase.auth.getSession();
 
-        // Function to send message back to the opener and close
-        function sendMessageToOpener(userData) {
-             if (window.opener) {
-                 // In this older version, we didn't send loginPageUrlUsed back.
-                 // If your extension code expects it, you might need to add it back.
-                 window.opener.postMessage(
-                    { type: "supabase-auth", user: userData },
-                    targetOrigin // Use the defined targetOrigin
-                );
-                console.log("Message sent to opener, closing popup...");
-                window.close(); // Close the popup after sending the data
-             } else {
-                statusElement.innerText = 'Signed in. No opener window found.';
-                console.warn("No opener window found to send message to.");
-             }
+      if (error) {
+        console.error('Supabase auth error:', error);
+        document.getElementById('status').innerText = 'Login failed.';
+        // Optionally send error back to opener
+        if (window.opener) {
+            window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*'); // Use a specific origin in production!
         }
-
-
-        // Listen for authentication state changes
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("Auth state changed in popup:", event, "session:", session);
-
-            if (event === 'SIGNED_IN' && session) {
-                statusElement.innerText = 'Signed in. Returning to app...';
-                console.log("User signed in...");
-                sendMessageToOpener(session.user); // Send user data back
-            } else if (event === 'SIGNED_OUT') {
-                 statusElement.innerText = 'Signed out. You can close this window.';
-                 console.log("User signed out.");
-                 sendMessageToOpener(null); // Send null user to indicate sign out
-            } else if (event === 'INITIAL_SESSION' && session) {
-               // If the user is already signed in when the popup opens
-               statusElement.innerText = 'Already signed in. Returning to app...';
-               console.log("Initial session found...");
-               sendMessageToOpener(session.user); // Send existing user data back
-            } else if (event === 'INITIAL_SESSION' && !session) {
-                // No session initially, proceed to trigger the Google login
-                statusElement.innerText = 'Redirecting to Google...';
-                console.log(`Initiating OAuth flow for provider: google`);
-
-                 supabase.auth.signInWithOAuth({
-                   provider: "google", // Hardcoded to Google for this version
-                   options: {
-                     // This must be the URL of THIS login.html page
-                     redirectTo: window.location.href // Use window.location.href to get the current URL
-                   }
-                 }).then(({ data, error }) => {
-                     if (error) {
-                         console.error("OAuth sign in failed:", error);
-                         statusElement.innerHTML = `<span class="error">Login failed: ${error.message}</span>`; // Display error
-                     }
-                     // Note: data will be null here because signInWithOAuth causes a redirect
-                 }).catch(err => {
-                      console.error("Error during signInWithOAuth:", err);
-                      statusElement.innerHTML = `<span class="error">An unexpected error occurred: ${err.message}</span>`; // Display error
-                 });
+      } else if (data.session) {
+        console.log('Supabase session received:', data.session);
+        document.getElementById('status').innerText = 'Login successful. Returning to Scratch...';
+        // Send user data back to the window that opened this one
+        if (window.opener) {
+          const user = data.session.user;
+          const userData = {
+            type: 'supabaseAuthResult',
+            success: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              full_name: user.user_metadata.full_name || '', // Assuming Google provides full_name
+              avatar_url: user.user_metadata.avatar_url || '', // Assuming Google provides avatar_url
+              email_verified: user.email_verified || false, // Assuming Google provides email_verified
+              // Add other metadata you might need
             }
-        });
+          };
+          window.opener.postMessage(userData, '*'); // Use a specific origin in production!
+          // Close this window after a short delay
+          setTimeout(() => window.close(), 1000);
+        } else {
+             document.getElementById('status').innerText = 'Login successful, but could not communicate back to Scratch.';
+        }
+      } else {
+         // This might happen on initial load before redirect or if no session is found
+         document.getElementById('status').innerText = 'No active session found. Redirecting to login...';
+         // Initiate the login redirect if no session
+         initiateLogin();
+      }
+    }
 
-         // Also handle cases where the page is loaded directly (e.g., after Google redirect)
-         // The onAuthStateChange listener for 'INITIAL_SESSION' should catch this,
-         // but checking getSession directly is a good fallback/initial check.
-          supabase.auth.getSession().then(({ data: { session } }) => {
-              if (session) {
-                  console.log("Session found on direct load...");
-                   statusElement.innerText = 'Session found. Returning to app...';
-                   sendMessageToOpener(session.user); // Send existing user data back
-              } else {
-                   // If no session found initially, the onAuthStateChange listener will handle starting the flow
-                   console.log("No session found on direct load, waiting for onAuthStateChange...");
-                   // The onAuthStateChange 'INITIAL_SESSION' event will handle starting the flow
-              }
-          }).catch(err => {
-              console.error("Error checking session on load:", err);
-              statusElement.innerHTML = `<span class="error">Error checking session: ${err.message}</span>`; // Display error
-          });
+    async function initiateLogin() {
+         const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                // Specify the redirect URI where Supabase should send the user back
+                // This should match a URI configured in your Supabase Auth settings
+                redirectTo: window.location.href // Redirect back to this same page to handle the session
+            }
+         });
+         if (error) {
+             console.error('Error initiating OAuth:', error);
+             document.getElementById('status').innerText = 'Error initiating login.';
+             if (window.opener) {
+                 window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: error.message }, '*'); // Use a specific origin!
+             }
+         }
+    }
+
+    // Check for session immediately when the page loads (in case of redirect)
+    // If no session, initiate the login flow.
+    supabase.auth.getSession().then(({ data }) => {
+        if (data.session) {
+            handleAuthCallback(); // Session found, process it
+        } else {
+            initiateLogin(); // No session, start login
+        }
+    }).catch(err => {
+         console.error('Error checking session:', err);
+         document.getElementById('status').innerText = 'Error checking session.';
+          if (window.opener) {
+             window.opener.postMessage({ type: 'supabaseAuthResult', success: false, error: err.message }, '*'); // Use a specific origin!
+         }
+    });
 
 
-    </script>
+  </script>
 </body>
 </html>

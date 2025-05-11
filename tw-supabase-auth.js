@@ -2,142 +2,85 @@
 // This extension opens a popup window for the Google OAuth flow
 // and receives the user session data back via postMessage.
 // Added features to get more user details from Google profile metadata,
+// including a block for the profile picture URL (format depends on Google).
 // including a block for the profile picture URL with customizable size, and categorized blocks.
-// Added a block to sign the user out.
 
 (function (Scratch) {
   // --- Configuration ---
+  // Replace with your actual Supabase Project URL and Anon Key
+  const SUPABASE_URL = "https://gxqbrcutslyybxexvszr.supabase.co"; // e.g., "https://gxqbrcutslyybxexvszr.supabase.co"
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjUY"; // Your project's public anon key
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU"; // Your project's public anon key
 
   // Replace with the EXACT URL where you host your login.html file
   // This URL is used in window.open() to launch the popup.
-  // This URL is used in window.open() to launch the popup from the extension.
-  // This page MUST be hosted online (e.g., GitHub Pages) for the OAuth redirect to work.
-  const LOGIN_PAGE_URL = "https://colebohte.github.io/river-services/login.html"; // e.g., "https://colebohte.github.io/river-services/login.html"
-
-  // IMPORTANT: Set this to the EXACT origin of the window running your TurboWarp project.
-  // This is crucial for security in postMessage.
-  // IMPORTANT: This variable is a reference for what the 'targetOrigin'
-  // in your login.html's window.opener.postMessage() call MUST be set to.
-  // It should be the EXACT origin of the window running your TurboWarp project.
-  // - If using turbowarp.org editor: "https://turbowarp.org"
-  // - If embedding on your own web page: "https://your-embedding-domain.com" (e.g., "https://colebohte.github.io")
-  // - If running in Electron or TurboWarp Desktop: "file://"
-  const TURBOWARP_ORIGIN = "file://"; // <--- Set this based on your target environment!
-  // Ensure the 'targetOrigin' in your login.html matches this value for security.
-  const EXPECTED_TURBOWARP_ORIGIN_FOR_POSTMESSAGE = "file://"; // <--- Set this based on your target environment!
-
-  // --- Supabase Client Initialization ---
-  const script = document.createElement("script");
-      constructor() {
-        this.user = null; // Stores the logged-in user object
-
-        // Listen for messages from the popup window
-        // Listen for messages from the popup window (login.html)
-        // The login.html page will send the user data back via postMessage
-        window.addEventListener("message", (event) => {
-          // IMPORTANT: Verify the origin of the message for security!
-          // Ensure the message is coming from your trusted login page origin.
-          // This check ensures the message is coming from your trusted login page origin.
-          // This origin check remains based on the hosted login.html URL.
-          if (event.origin === new URL(LOGIN_PAGE_URL).origin) {
-            if (event.data && event.data.type === "supabase-auth") {
               opcode: "signIn",
               blockType: Scratch.BlockType.COMMAND, // Command block (runs an action)
               text: "sign in with Google"
             },
-             { // Block to sign out
-              opcode: "signOut",
-              blockType: Scratch.BlockType.COMMAND, // Command block
-              text: "sign out"
+            {
+              opcode: "getEmail",
+              blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
+              text: "user email"
+            },
+            {
+              opcode: "getUID",
+              blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
+              text: "user UID"
             },
              { // Optional: Add a block to check if the user is logged in
               opcode: "isLoggedIn",
-              blockType: Scratch.BlockType.BOOLEAN, // Boolean block (returns true/false)
-              text: "is logged in?"
-            },
-             { // Optional: Add a sign out block
-              opcode: "signOut",
               blockType: Scratch.BlockType.COMMAND, // Command block
               text: "sign out"
             },
+            // --- Blocks for User Details ---
             // --- Categorized User Data Blocks ---
             { // Label block for categorization
+              blockType: Scratch.BlockType.LABEL,
+              text: "Returned User Data"
+            },
+            {
+              opcode: "getEmail",
+              blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
+              text: "user email"
+            },
+            {
+              opcode: "getUID",
+              blockType: Scratch.BlockType.REPORTER, // Reporter block (returns a value)
+              text: "user UID"
+            },
+            {
+              opcode: "getProfilePicUrl",
+              blockType: Scratch.BlockType.REPORTER,
+              text: "profile picture URL"
+              text: "profile picture URL (default size)" // Clarified text
+            },
+             { // New block for profile pic URL (specifically requested)
+              opcode: "getProfilePicPngUrl",
+             { // Modified block for profile pic URL with customizable size
+              opcode: "getProfilePicSizedUrl", // Changed opcode name
+              blockType: Scratch.BlockType.REPORTER,
+              text: "profile pic png url" // Text for the new block
+              text: "profile pic URL size [SIZE]", // Text with input slot
+              arguments: {
+                  SIZE: { // Define the input argument
+                      type: Scratch.ArgumentType.NUMBER, // Expect a number input
+                      defaultValue: 156 // Default size
+                  }
+              }
             },
             {
               opcode: "getFullName",
-              blockType: Scratch.BlockType.REPORTER,
-              blockType: Scratch.ArgumentType.REPORTER, // Corrected type here
-              text: "full name"
-            },
-            {
-              opcode: "getShortName",
-              blockType: Scratch.BlockType.REPORTER,
-              blockType: Scratch.ArgumentType.REPORTER, // Corrected type here
-              text: "short name"
-            },
-            {
-              opcode: "getLanguage",
-              blockType: Scratch.BlockType.REPORTER,
-              blockType: Scratch.ArgumentType.REPORTER,
-              text: "language"
-            },
-            {
-              opcode: "getRegion",
-              blockType: Scratch.BlockType.REPORTER,
-              blockType: Scratch.ArgumentType.REPORTER,
-              text: "region"
-            },
-            {
-          "width=500,height=600,resizable=yes,scrollbars=yes" // Features for the popup window
-        );
-        // Note: The actual Supabase signInWithOAuth call happens inside login.html
-        // The logic to force account selection is also in login.html
-      }
-
-      // Implementation for the "sign out" command block
-       async signOut() {
-         // Call Supabase sign out. This clears the local session.
-         // The login.html page will handle forcing the account selection
-         // the next time it's opened.
-         const { error } = await supabase.auth.signOut();
-         if (!error) {
-            this.user = null; // Clear local user state on successful sign out
-            console.log("User signed out successfully."); // Log for debugging
-             // You might want to broadcast a Scratch message here to update UI
-         } else {
-            console.error("Sign out failed:", error.message); // Log error
-         }
-       }
-
-
-      // Implementation for the "user email" reporter block
-      getEmail() {
-        // Return the email from the stored user object, or an empty string if not logged in
-         return this.user !== null;
-      }
-
-       // Implementation for the "sign out" command block
-       async signOut() {
-         // Call Supabase sign out
-         const { error } = await supabase.auth.signOut();
-         if (!error) {
-            this.user = null; // Clear local user state on successful sign out
-            console.log("User signed out successfully."); // Log for debugging
-             // You might want to broadcast a Scratch message here to update UI
-         } else {
-            console.error("Sign out failed:", error.message); // Log error
-         }
-       }
-
-       // --- Implementations for User Details Blocks ---
-
-       // Implementation for "profile picture URL" reporter block (existing)
-       getProfilePicUrl() {
-           // Google profile picture URL is typically in user_metadata.avatar_url
            return this.user?.user_metadata?.avatar_url ?? "";
        }
 
+        // Implementation for the new "profile pic png url" reporter block
+        getProfilePicPngUrl() {
+            // Google's avatar_url typically provides a direct link to the image.
+            // The format (PNG, JPG, etc.) is determined by the image itself.
+            // We are returning the direct URL provided by Google/Supabase.
+            // We cannot guarantee it's always PNG unless Google provides a specific URL parameter for that.
+            return this.user?.user_metadata?.avatar_url ?? "";
         // Implementation for the new "profile pic URL size [SIZE]" reporter block
         // Accepts a 'size' argument from the block
         getProfilePicSizedUrl(args) {

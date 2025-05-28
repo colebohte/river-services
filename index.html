@@ -114,183 +114,237 @@
     </div>
 
     <script>
-        // Initialize Supabase
-        // IMPORTANT: Replace these with your actual Supabase project URL and public API key
-        const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // e.g., 'https://abcdefg1234.supabase.co'
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        // Ensure the DOM is fully loaded before executing scripts that interact with it
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Supabase
+            // IMPORTANT: Replace these with your actual Supabase project URL and public API key
+            // You can find these in your Supabase project dashboard under Project Settings > API
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.coL'; // e.g., 'https://abcdefg1234.supabase.co'
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
 
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // Check if Supabase credentials are still placeholders
+            if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+                console.error('Supabase Error: Please replace "YOUR_SUPABASE_URL" and "YOUR_SUPABASE_ANON_KEY" with your actual Supabase project credentials.');
+                document.getElementById('message-area').textContent = 'Configuration Error: Please update Supabase URL and Key in the script.';
+                document.getElementById('message-area').className = 'message error';
+                document.getElementById('message-area').classList.remove('hidden');
+                // Prevent further execution if credentials are not set
+                return; // Use return instead of throw in DOMContentLoaded to avoid blocking other scripts
+            }
 
-        // Get DOM elements
-        const authSection = document.getElementById('auth-section');
-        const signupForm = document.getElementById('signup-form');
-        const signinForm = document.getElementById('signin-form');
-        const dashboardSection = document.getElementById('dashboard-section');
+            // Verify that Supabase object is defined before creating client
+            if (typeof Supabase === 'undefined') {
+                console.error('Supabase Error: Supabase library is not loaded. Check the CDN script tag.');
+                document.getElementById('message-area').textContent = 'Error: Supabase library failed to load.';
+                document.getElementById('message-area').className = 'message error';
+                document.getElementById('message-area').classList.remove('hidden');
+                return;
+            }
 
-        const signupEmailInput = document.getElementById('signup-email');
-        const signupPasswordInput = document.getElementById('signup-password');
-        const signupButton = document.getElementById('signup-button');
+            const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase client initialized.');
 
-        const signinEmailInput = document.getElementById('signin-email');
-        const signinPasswordInput = document.getElementById('signin-password');
-        const signinButton = document.getElementById('signin-button');
+            // Get DOM elements for easier access
+            const authSection = document.getElementById('auth-section');
+            const signupForm = document.getElementById('signup-form');
+            const signinForm = document.getElementById('signin-form');
+            const dashboardSection = document.getElementById('dashboard-section');
 
-        const signoutButton = document.getElementById('signout-button');
-        const userEmailDisplay = document.getElementById('user-email');
+            const signupEmailInput = document.getElementById('signup-email');
+            const signupPasswordInput = document.getElementById('signup-password');
+            const signupButton = document.getElementById('signup-button');
 
-        const showSigninLink = document.getElementById('show-signin');
-        const showSignupLink = document.getElementById('show-signup');
-        const messageArea = document.getElementById('message-area');
+            const signinEmailInput = document.getElementById('signin-email');
+            const signinPasswordInput = document.getElementById('signin-password');
+            const signinButton = document.getElementById('signin-button');
 
-        // Function to display messages
-        function showMessage(text, type) {
-            messageArea.textContent = text;
-            messageArea.className = `message ${type}`; // Apply success or error class
-            messageArea.classList.remove('hidden');
-            setTimeout(() => {
-                messageArea.classList.add('hidden');
-                messageArea.textContent = '';
-            }, 5000); // Hide message after 5 seconds
-        }
+            const signoutButton = document.getElementById('signout-button');
+            const userEmailDisplay = document.getElementById('user-email');
 
-        // Function to update UI based on auth state
-        async function updateUI(session) {
-            if (session) {
-                // User is logged in
-                authSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
-                userEmailDisplay.textContent = `Hello, ${session.user.email}!`;
-            } else {
-                // User is logged out or not authenticated
-                authSection.classList.remove('hidden');
-                dashboardSection.classList.add('hidden');
-                // Default to showing signup form if no session
-                signupForm.classList.remove('hidden');
+            const showSigninLink = document.getElementById('show-signin');
+            const showSignupLink = document.getElementById('show-signup');
+            const messageArea = document.getElementById('message-area');
+
+            /**
+             * Displays a message to the user in the message area.
+             * @param {string} text - The message text.
+             * @param {'success' | 'error'} type - The type of message (determines styling).
+             */
+            function showMessage(text, type) {
+                console.log(`Message (${type}): ${text}`);
+                messageArea.textContent = text;
+                messageArea.className = `message ${type}`; // Apply success or error class
+                messageArea.classList.remove('hidden');
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    messageArea.classList.add('hidden');
+                    messageArea.textContent = '';
+                }, 5000);
+            }
+
+            /**
+             * Updates the UI based on the current authentication session.
+             * Shows the dashboard if a session exists, otherwise shows auth forms.
+             * @param {object | null} session - The Supabase session object, or null if logged out.
+             */
+            async function updateUI(session) {
+                console.log('Updating UI. Session:', session);
+                if (session) {
+                    // User is logged in
+                    authSection.classList.add('hidden');
+                    dashboardSection.classList.remove('hidden');
+                    userEmailDisplay.textContent = `Hello, ${session.user.email}!`;
+                } else {
+                    // User is logged out or not authenticated
+                    authSection.classList.remove('hidden');
+                    dashboardSection.classList.add('hidden');
+                    // Default to showing signup form if no session, or if coming from sign out
+                    signupForm.classList.remove('hidden');
+                    signinForm.classList.add('hidden');
+                }
+            }
+
+            // --- Event Listeners for Authentication Actions ---
+
+            // Handle Sign Up button click
+            signupButton.addEventListener('click', async () => {
+                console.log('Sign Up button clicked.');
+                const email = signupEmailInput.value;
+                const password = signupPasswordInput.value;
+
+                if (!email || !password) {
+                    showMessage('Please enter both email and password.', 'error');
+                    return;
+                }
+
+                try {
+                    console.log('Attempting sign up for:', email);
+                    const { data, error } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) {
+                        console.error('Sign up error:', error.message);
+                        showMessage(error.message, 'error');
+                    } else if (data.user) {
+                        // User successfully created, but needs email confirmation
+                        console.log('Sign up successful, user needs email confirmation:', data.user);
+                        showMessage('Sign up successful! Please check your email to confirm your account.', 'success');
+                        signupEmailInput.value = '';
+                        signupPasswordInput.value = '';
+                        // Optionally, switch to sign-in form after successful signup prompt
+                        signupForm.classList.add('hidden');
+                        signinForm.classList.remove('hidden');
+                    } else {
+                        // This case handles when data.user is null but no error (e.g., email already registered and confirmation sent)
+                        console.log('Sign up data received, but no user object (likely email already sent for confirmation or existing user):', data);
+                        showMessage('Sign up request sent. If this email is new, please check your inbox for a confirmation link.', 'success');
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during sign up:', err);
+                    showMessage('An unexpected error occurred during sign up.', 'error');
+                }
+            });
+
+            // Handle Sign In button click
+            signinButton.addEventListener('click', async () => {
+                console.log('Sign In button clicked.');
+                const email = signinEmailInput.value;
+                const password = signinPasswordInput.value;
+
+                if (!email || !password) {
+                    showMessage('Please enter both email and password.', 'error');
+                    return;
+                }
+
+                try {
+                    console.log('Attempting sign in for:', email);
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) {
+                        console.error('Sign in error:', error.message);
+                        showMessage(error.message, 'error');
+                    } else if (data.user) {
+                        console.log('Signed in successfully! User:', data.user);
+                        showMessage('Signed in successfully!', 'success');
+                        updateUI(data.session); // Update UI with the new session
+                        signinEmailInput.value = '';
+                        signinPasswordInput.value = '';
+                    } else {
+                        console.log('Sign in data received, but no user object (unexpected for signInWithPassword):', data);
+                        showMessage('Sign in failed. Please check your email and password.', 'error');
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during sign in:', err);
+                    showMessage('An unexpected error occurred during sign in.', 'error');
+                }
+            });
+
+            // Handle Sign Out button click
+            signoutButton.addEventListener('click', async () => {
+                console.log('Sign Out button clicked.');
+                try {
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                        console.error('Sign out error:', error.message);
+                        showMessage(error.message, 'error');
+                    } else {
+                        console.log('Signed out successfully!');
+                        showMessage('Signed out successfully!', 'success');
+                        updateUI(null); // Clear UI after sign out
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during sign out:', err);
+                    showMessage('An unexpected error occurred during sign out.', 'error');
+                }
+            });
+
+            // Toggle between Sign In and Sign Up forms
+            showSigninLink.addEventListener('click', () => {
+                console.log('Showing Sign In form.');
+                signupForm.classList.add('hidden');
+                signinForm.classList.remove('hidden');
+                messageArea.classList.add('hidden'); // Hide any previous messages
+            });
+
+            showSignupLink.addEventListener('click', () => {
+                console.log('Showing Sign Up form.');
                 signinForm.classList.add('hidden');
-            }
-        }
+                signupForm.classList.remove('hidden');
+                messageArea.classList.add('hidden'); // Hide any previous messages
+            });
 
-        // Event Listeners
+            // Listen for auth state changes from Supabase
+            supabase.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state changed:', event, session);
+                updateUI(session);
+            });
 
-        // Sign Up
-        signupButton.addEventListener('click', async () => {
-            const email = signupEmailInput.value;
-            const password = signupPasswordInput.value;
-
-            if (!email || !password) {
-                showMessage('Please enter both email and password.', 'error');
-                return;
-            }
-
-            try {
-                const { data, error } = await supabase.auth.signUp({
-                    email: email,
-                    password: password,
-                });
-
-                if (error) {
-                    showMessage(error.message, 'error');
-                } else if (data.user) {
-                    showMessage('Sign up successful! Please check your email to confirm your account.', 'success');
-                    signupEmailInput.value = '';
-                    signupPasswordInput.value = '';
-                    // Optionally, switch to sign-in form after successful signup
-                    signupForm.classList.add('hidden');
-                    signinForm.classList.remove('hidden');
-                } else {
-                    // This case handles when data.user is null but no error (e.g., email already registered)
-                    showMessage('Sign up request sent. If this email is new, please check your inbox for a confirmation link.', 'success');
-                }
-            } catch (err) {
-                showMessage('An unexpected error occurred during sign up.', 'error');
-                console.error('Sign up error:', err);
-            }
-        });
-
-        // Sign In
-        signinButton.addEventListener('click', async () => {
-            const email = signinEmailInput.value;
-            const password = signinPasswordInput.value;
-
-            if (!email || !password) {
-                showMessage('Please enter both email and password.', 'error');
-                return;
-            }
-
-            try {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email: email,
-                    password: password,
-                });
-
-                if (error) {
-                    showMessage(error.message, 'error');
-                } else if (data.user) {
-                    showMessage('Signed in successfully!', 'success');
-                    updateUI(data.session); // Update UI with the new session
-                    signinEmailInput.value = '';
-                    signinPasswordInput.value = '';
-                }
-            } catch (err) {
-                showMessage('An unexpected error occurred during sign in.', 'error');
-                console.error('Sign in error:', err);
-            }
-        });
-
-        // Sign Out
-        signoutButton.addEventListener('click', async () => {
-            try {
-                const { error } = await supabase.auth.signOut();
-                if (error) {
-                    showMessage(error.message, 'error');
-                } else {
-                    showMessage('Signed out successfully!', 'success');
-                    updateUI(null); // Clear UI after sign out
-                }
-            } catch (err) {
-                showMessage('An unexpected error occurred during sign out.', 'error');
-                console.error('Sign out error:', err);
-            }
-        });
-
-        // Toggle between Sign In and Sign Up forms
-        showSigninLink.addEventListener('click', () => {
-            signupForm.classList.add('hidden');
-            signinForm.classList.remove('hidden');
-            messageArea.classList.add('hidden'); // Hide any previous messages
-        });
-
-        showSignupLink.addEventListener('click', () => {
-            signinForm.classList.add('hidden');
-            signupForm.classList.remove('hidden');
-            messageArea.classList.add('hidden'); // Hide any previous messages
-        });
-
-        // Listen for auth state changes
-        supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event, session);
-            updateUI(session);
-        });
-
-        // Initial check for session on page load
-        async function getInitialSession() {
-            try {
-                const { data: { session }, error } = await supabase.auth.getSession();
-                if (error) {
-                    console.error('Error getting initial session:', error);
+            // Initial check for session on page load
+            async function getInitialSession() {
+                console.log('Checking for initial session...');
+                try {
+                    const { data: { session }, error } = await supabase.auth.getSession();
+                    if (error) {
+                        console.error('Error getting initial session:', error);
+                        updateUI(null);
+                    } else {
+                        console.log('Initial session found:', session);
+                        updateUI(session);
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during initial session check:', err);
                     updateUI(null);
-                } else {
-                    updateUI(session);
                 }
-            } catch (err) {
-                console.error('An unexpected error occurred during initial session check:', err);
-                updateUI(null);
             }
-        }
 
-        // Call initial session check when the page loads
-        getInitialSession();
-
+            // Call initial session check when the page loads
+            getInitialSession();
+        }); // End of DOMContentLoaded listener
     </script>
 </body>
 </html>

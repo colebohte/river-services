@@ -5,29 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Email Verification</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+      /* Basic styling for better readability */
+      body {
+          font-family: 'Inter', sans-serif;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          min-height: 100vh;
+          background-color: #f0f2f5;
+          padding: 1rem;
+          text-align: center;
+      }
+      h1 {
+          font-size: 2rem;
+          font-weight: bold;
+          margin-bottom: 1rem;
+          color: #333;
+      }
+      p {
+          font-size: 1.1rem;
+          color: #555;
+      }
+      a {
+          color: #4f46e5;
+          text-decoration: underline;
+      }
+      a:hover {
+          color: #4338ca;
+      }
+  </style>
 </head>
 <body>
   <h1>Verifying...</h1>
   <script>
+    // Supabase project URL and public anon key
+    // These are correctly placed here from your provided code
     const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    let supabase; // Declare supabase variable
+    try {
+        // Correct way to initialize Supabase client when using CDN global 'Supabase' object
+        supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('Supabase client initialized on verify page.');
+    } catch (error) {
+        console.error('Error initializing Supabase client on verify page:', error);
+        document.body.innerHTML = '<h1>❌ Initialization Error</h1><p>Failed to load Supabase. Please check your network or try again.</p>';
+        return; // Stop execution if client fails to initialize
+    }
+
+
+    // Listen for authentication state changes
     supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change event on verify page:', event, session);
       if (event === 'SIGNED_IN') {
         document.body.innerHTML = '<h1>✅ Email Verified!</h1><p>You can now <a href="/river-services/">sign in</a>.</p>';
       } else {
-        document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>Please try signing in again.</p>';
+        // This handles cases where the session might not be immediately available or verification fails
+        document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>Please try signing in again, or check your email for the correct link.</p>';
       }
     });
 
-    // This triggers a session update if the user just verified their email via link
+    // Also perform an immediate check for the session on page load
+    // This is important because onAuthStateChange might not fire immediately on page load
+    // if the session is already established from the verification link.
     (async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        document.body.innerHTML = '<h1>✅ Email Verified!</h1><p>You can now <a href="/river-services/">sign in</a>.</p>';
-      } else {
-        document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>Please try signing in again.</p>';
+      console.log('Performing immediate session check on verify page.');
+      try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) {
+              console.error('Error getting session on verify page:', error);
+              document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>Error retrieving session. Please try signing in again.</p>';
+          } else if (session) {
+              console.log('Session found on verify page:', session);
+              document.body.innerHTML = '<h1>✅ Email Verified!</h1><p>You can now <a href="/river-services/">sign in</a>.</p>';
+          } else {
+              console.log('No session found on verify page after immediate check.');
+              // This might happen if the verification link is invalid or already used
+              document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>No active session found. The link might be invalid or expired. Please try signing in again.</p>';
+          }
+      } catch (err) {
+          console.error('An unexpected error occurred during immediate session check on verify page:', err);
+          document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>An unexpected error occurred. Please try signing in again.</p>';
       }
     })();
   </script>

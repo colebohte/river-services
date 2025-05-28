@@ -39,7 +39,7 @@
       <input
         type="text"
         id="username"
-        placeholder="Username (max 32 chars, no spaces/caps)"
+        placeholder="Username (max 32 chars, no spaces/caps/special chars)"
         class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         maxlength="32"
         required
@@ -152,6 +152,14 @@
 
       if (username !== username.toLowerCase()) {
         showMessage('Username cannot contain capital letters.', 'error');
+        setButtonLoading(false);
+        return;
+      }
+
+      // New validation: Check for special characters
+      const alphanumericRegex = /^[a-z0-9]+$/; // Only lowercase letters and numbers
+      if (!alphanumericRegex.test(username)) {
+        showMessage('Username can only contain lowercase letters and numbers (no special characters).', 'error');
         setButtonLoading(false);
         return;
       }

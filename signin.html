@@ -15,8 +15,6 @@
             min-height: 100vh;
             background-color: #f0f2f5;
             padding: 1rem;
-            background: url("bg.jpg");
-            background-width: 100vw;
         }
         .container {
             max-width: 400px;
@@ -176,17 +174,20 @@
 
             // Handle form submission
             signinForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Prevent default form submission and page reload
+                console.log('Sign In form submitted. Preventing default behavior.');
 
                 const email = signinEmailInput.value.trim();
                 const password = signinPasswordInput.value;
 
                 if (!email || !password) {
                     showMessage('Please enter both email and password', 'error');
+                    console.log('Validation failed: Email or password missing.');
                     return;
                 }
 
                 setButtonLoading(true);
+                console.log('Attempting to sign in with email:', email);
 
                 try {
                     const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -195,10 +196,10 @@
                     });
 
                     if (error) {
-                        console.error('Sign in error:', error);
+                        console.error('Sign in API error:', error);
                         showMessage(error.message, 'error');
                     } else if (data.user) {
-                        console.log('Sign in successful:', data.user);
+                        console.log('Sign in successful! User data:', data.user);
                         showMessage('Signed in successfully! Redirecting...', 'success');
 
                         // Clear form
@@ -207,14 +208,20 @@
 
                         // Redirect after delay
                         setTimeout(() => {
+                            console.log('Redirecting to account page...');
                             window.location.href = '/river-services/account.html';
                         }, 1500);
+                    } else {
+                        // This case should ideally not be reached if there's no error but no user
+                        console.warn('Sign in API returned no error but also no user data. This is unexpected.', data);
+                        showMessage('Sign in failed. Please check your credentials.', 'error');
                     }
                 } catch (err) {
-                    console.error('Unexpected error:', err);
-                    showMessage('An unexpected error occurred', 'error');
+                    console.error('Unexpected error during sign in process:', err);
+                    showMessage('An unexpected error occurred during sign in.', 'error');
                 } finally {
                     setButtonLoading(false);
+                    console.log('Sign in process completed (or failed). Button loading state reset.');
                 }
             });
 
@@ -223,33 +230,26 @@
                 console.log('Checking for existing session on signin page...');
                 try {
                     // Attempt to get the current session from local storage and validate it.
-                    // This is the first line of defense.
                     let { data: { session }, error: getSessionError } = await supabaseClient.auth.getSession();
 
                     if (getSessionError) {
                         console.error('Error getting initial session:', getSessionError);
-                        // If there's an error getting the session, treat as no valid session.
                         console.log('No valid session found due to error. Displaying sign-in form.');
                         return;
                     }
 
                     if (session) {
-                        // If a session is found, explicitly fetch user details from the backend.
-                        // This is a more robust check for user existence than just session validity.
-                        console.log('Initial session found. Attempting to get user details from backend...');
+                        console.log('Initial session found. Attempting to get user details from backend for robust check...');
                         const { data: { user }, error: getUserError } = await supabaseClient.auth.getUser();
 
                         if (getUserError || !user) {
-                            console.error('Error getting user details or user not found:', getUserError || 'User object is null/undefined');
-                            // If getUser fails or returns no user, it means the user account
-                            // no longer exists or is not active on the backend.
+                            console.error('Error getting user details or user not found on backend:', getUserError || 'User object is null/undefined');
                             console.log('User account not found on backend. Invalidating client session and staying on sign-in form.');
                             await supabaseClient.auth.signOut(); // Explicitly clear client-side session
                             showMessage('Your session is no longer valid or your account has been deleted. Please sign in again.', 'error');
                             return;
                         }
 
-                        // If we reach here, a valid session exists AND the user account is confirmed to exist on the backend.
                         console.log('Valid user account found on backend with active session, redirecting to account page.');
                         showMessage('Already signed in! Redirecting...', 'success');
                         setTimeout(() => {
@@ -261,12 +261,11 @@
                 } catch (err) {
                     console.error('An unexpected error occurred during session check or user fetch:', err);
                     showMessage('An unexpected error occurred during session check. Please try again.', 'error');
-                    // In case of unexpected errors, the sign-in form will remain visible.
                 }
             }
 
             checkExistingSession();
-        }); 
+        });
     </script>
 </body>
 </html>

@@ -220,54 +220,44 @@
             async function checkExistingSession() {
                 console.log('Checking for existing session on signin page...');
                 try {
-                    // First, attempt to get the current session. This retrieves from local storage
-                    // and performs a quick validation.
-                    let { data: { session }, error } = await supabaseClient.auth.getSession();
+                    // Attempt to get the current session from local storage and validate it.
+                    // This is the first line of defense.
+                    let { data: { session }, error: getSessionError } = await supabaseClient.auth.getSession();
 
-                    if (error) {
-                        console.error('Error getting initial session:', error);
+                    if (getSessionError) {
+                        console.error('Error getting initial session:', getSessionError);
                         // If there's an error getting the session, treat as no valid session.
                         console.log('No valid session found due to error. Displaying sign-in form.');
                         return;
                     }
 
                     if (session) {
-                        // If a session is found, explicitly refresh it to ensure it's still valid on the backend.
-                        // This is crucial for verifying if the user still "exists" and their session is active
-                        // after a backend deletion or token expiration.
-                        console.log('Initial session found. Attempting to refresh session for backend validation...');
-                        const { data: { session: refreshedSession }, error: refreshError } = await supabaseClient.auth.refreshSession();
+                        // If a session is found, explicitly fetch user details from the backend.
+                        // This is a more robust check for user existence than just session validity.
+                        console.log('Initial session found. Attempting to get user details from backend...');
+                        const { data: { user }, error: getUserError } = await supabaseClient.auth.getUser();
 
-                        if (refreshError) {
-                            console.error('Error refreshing session:', refreshError);
-                            // If refresh fails, the session is no longer valid on the backend.
-                            // This means the user effectively doesn't exist or is not authorized.
-                            console.log('Session refresh failed. Invalidating client session and staying on sign-in form.');
+                        if (getUserError || !user) {
+                            console.error('Error getting user details or user not found:', getUserError || 'User object is null/undefined');
+                            // If getUser fails or returns no user, it means the user account
+                            // no longer exists or is not active on the backend.
+                            console.log('User account not found on backend. Invalidating client session and staying on sign-in form.');
                             await supabaseClient.auth.signOut(); // Explicitly clear client-side session
-                            showMessage('Your session has expired or your account no longer exists. Please sign in again.', 'error');
+                            showMessage('Your session is no longer valid or your account has been deleted. Please sign in again.', 'error');
                             return;
                         }
 
-                        if (refreshedSession) {
-                            // If refreshedSession is not null, it means the session is still valid and active on the backend.
-                            console.log('Valid and refreshed session found, redirecting to account page.');
-                            showMessage('Already signed in! Redirecting...', 'success');
-                            setTimeout(() => {
-                                window.location.href = '/river-services/account.html';
-                            }, 1000);
-                        } else {
-                            // refreshedSession is null, meaning the session was invalidated during the refresh process.
-                            // This would happen if the user was deleted from the backend.
-                            console.log('Session invalidated during refresh. Displaying sign-in form.');
-                            // Explicitly sign out to ensure any stale client-side data is cleared.
-                            await supabaseClient.auth.signOut();
-                            showMessage('Your session is no longer valid. Please sign in again.', 'error');
-                        }
+                        // If we reach here, a valid session exists AND the user account is confirmed to exist on the backend.
+                        console.log('Valid user account found on backend with active session, redirecting to account page.');
+                        showMessage('Already signed in! Redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = '/river-services/account.html';
+                        }, 1000);
                     } else {
                         console.log('No existing session found. Displaying sign-in form.');
                     }
                 } catch (err) {
-                    console.error('An unexpected error occurred during session check or refresh:', err);
+                    console.error('An unexpected error occurred during session check or user fetch:', err);
                     showMessage('An unexpected error occurred during session check. Please try again.', 'error');
                     // In case of unexpected errors, the sign-in form will remain visible.
                 }

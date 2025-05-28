@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In to Supabase Auth</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            background-color: #4338ca;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .link-text {
+            color: #4f46e5;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 1rem;
+            display: block;
+        }
+        .link-text:hover {
+            color: #4338ca;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
+
+        <form id="signin-form" class="space-y-4">
+            <input type="email" id="signin-email" placeholder="Email" class="mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+            <input type="password" id="signin-password" placeholder="Password" class="mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent" required>
+            <button type="submit" id="signin-button">Sign In</button>
+        </form>
+
+        <p class="text-sm text-gray-600 mt-4">Don't have an account? <a href="/river-services/index.html" class="link-text">Sign Up</a></p>
+
+        <div id="message-area" class="message hidden"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // Ensure the DOM is fully loaded before executing scripts that interact with it
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Initialize Supabase
+            // IMPORTANT: Use your actual Supabase project URL and public API key
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
+
+            let supabase;
+            try {
+                // Verify that Supabase object is defined before creating client
+                if (typeof Supabase === 'undefined') {
+                    throw new Error('Supabase library is not loaded. Check the CDN script tag or network connectivity.');
+                }
+                supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized on signin page.');
+            } catch (error) {
+                console.error('Supabase Initialization Error:', error.message);
+                document.getElementById('message-area').textContent = `Error: ${error.message}`;
+                document.getElementById('message-area').className = 'message error';
+                document.getElementById('message-area').classList.remove('hidden');
+                return; // Stop execution if Supabase client cannot be initialized
+            }
+
+            // Get DOM elements
+            const signinForm = document.getElementById('signin-form');
+            const signinEmailInput = document.getElementById('signin-email');
+            const signinPasswordInput = document.getElementById('signin-password');
+            const messageArea = document.getElementById('message-area');
+
+            /**
+             * Displays a message to the user in the message area.
+             * @param {string} text - The message text.
+             * @param {'success' | 'error'} type - The type of message (determines styling).
+             */
+            function showMessage(text, type) {
+                console.log(`Message (${type}): ${text}`);
+                messageArea.textContent = text;
+                messageArea.className = `message ${type}`; // Apply success or error class
+                messageArea.classList.remove('hidden');
+                // Hide message after 5 seconds
+                setTimeout(() => {
+                    messageArea.classList.add('hidden');
+                    messageArea.textContent = '';
+                }, 5000);
+            }
+
+            // Handle Sign In form submission
+            signinForm.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevent default form submission
+                console.log('Sign In form submitted.');
+
+                const email = signinEmailInput.value;
+                const password = signinPasswordInput.value;
+
+                if (!email || !password) {
+                    showMessage('Please enter both email and password.', 'error');
+                    return;
+                }
+
+                try {
+                    console.log('Attempting sign in for:', email);
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) {
+                        console.error('Sign in error:', error.message);
+                        showMessage(error.message, 'error');
+                    } else if (data.user) {
+                        console.log('Signed in successfully! User:', data.user);
+                        showMessage('Signed in successfully! Redirecting...', 'success');
+                        // Redirect to the account management page
+                        window.location.href = '/river-services/account.html';
+                    } else {
+                        console.log('Sign in data received, but no user object (unexpected for signInWithPassword):', data);
+                        showMessage('Sign in failed. Please check your email and password.', 'error');
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during sign in:', err);
+                    showMessage('An unexpected error occurred during sign in.', 'error');
+                }
+            });
+
+            // Optional: Check for existing session on page load and redirect if already logged in
+            async function checkSessionAndRedirect() {
+                console.log('Checking for existing session on signin page...');
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        console.log('Existing session found, redirecting to account page.');
+                        window.location.href = '/river-services/account.html';
+                    } else {
+                        console.log('No existing session found.');
+                    }
+                } catch (err) {
+                    console.error('Error checking session on signin page:', err);
+                }
+            }
+            checkSessionAndRedirect();
+        }); // End of DOMContentLoaded listener
+    </script>
+</body>
+</html>

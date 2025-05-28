@@ -2,215 +2,66 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Supabase Auth System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supabase Auth</title>
+  <!-- Tailwind CDN (Dev Only!) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: #f0f2f5;
-      padding: 1rem;
-    }
-    .container {
-      max-width: 400px;
-      width: 100%;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      padding: 2.5rem;
-      text-align: center;
-    }
-    input, button {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border-radius: 8px;
-      font-size: 1rem;
-    }
-    input {
-      border: 1px solid #d1d5db;
-      box-sizing: border-box;
-    }
-    button {
-      background-color: #4f46e5;
-      color: white;
-      border: none;
-      font-weight: 600;
-      transition: background-color 0.2s ease-in-out;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #4338ca;
-    }
-    button:disabled {
-      background-color: #9ca3af;
-      cursor: not-allowed;
-    }
-    .message {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      text-align: left;
-    }
-    .message.success {
-      background-color: #d1fae5;
-      color: #065f46;
-      border: 1px solid #34d399;
-    }
-    .message.error {
-      background-color: #fee2e2;
-      color: #991b1b;
-      border: 1px solid #ef4444;
-    }
-    .link-text {
-      color: #4f46e5;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: 1rem;
-      display: block;
-    }
-    .link-text:hover {
-      color: #4338ca;
-    }
-    .hidden {
-      display: none;
-    }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <h1 class="text-3xl font-bold mb-6 text-gray-800">Supabase Auth</h1>
-
-    <div id="auth-section">
-      <div id="signup-form">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Sign Up</h2>
-        <input type="email" id="signup-email" placeholder="Email">
-        <input type="password" id="signup-password" placeholder="Password">
-        <button id="signup-button">Sign Up</button>
-        <p class="text-sm text-gray-600 mt-4">
-          Already have an account? <span class="link-text" id="show-signin">Sign In</span>
-        </p>
-      </div>
-
-      <div id="signin-form" class="hidden">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-700">Sign In</h2>
-        <input type="email" id="signin-email" placeholder="Email">
-        <input type="password" id="signin-password" placeholder="Password">
-        <button id="signin-button">Sign In</button>
-        <p class="text-sm text-gray-600 mt-4">
-          Don't have an account? <span class="link-text" id="show-signup">Sign Up</span>
-        </p>
-      </div>
-    </div>
-
-    <div id="dashboard-section" class="hidden">
-      <h2 class="text-2xl font-semibold mb-4 text-gray-700">Welcome!</h2>
-      <p id="user-email" class="text-lg text-gray-700 mb-6"></p>
-      <button id="signout-button" class="bg-red-500 hover:bg-red-600">Sign Out</button>
-    </div>
-
-    <div id="message-area" class="message hidden"></div>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
+    <h1 class="text-2xl font-bold mb-6 text-center">Sign Up</h1>
+    <form id="signup-form" class="space-y-4">
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        class="w-full px-4 py-2 border rounded"
+        required
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        class="w-full px-4 py-2 border rounded"
+        required
+      />
+      <button
+        type="submit"
+        class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+      >
+        Sign Up
+      </button>
+    </form>
+    <div id="message" class="mt-4 text-sm text-center text-red-500"></div>
   </div>
 
-  <script>
-    // ✅ INIT SUPABASE FIRST
-    const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
+  <!-- Supabase Client -->
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    // ✅ Make sure your keys are actually correct here
+    const supabaseUrl = 'https://your-project.supabase.co'
+    const supabaseKey = 'public-anon-key'
+    const supabase = createClient(supabaseUrl, supabaseKey)
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const signupEmail = document.getElementById('signup-email');
-      const signupPassword = document.getElementById('signup-password');
-      const signupButton = document.getElementById('signup-button');
+    const form = document.getElementById('signup-form')
+    const message = document.getElementById('message')
 
-      const signinEmail = document.getElementById('signin-email');
-      const signinPassword = document.getElementById('signin-password');
-      const signinButton = document.getElementById('signin-button');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const email = document.getElementById('email').value
+      const password = document.getElementById('password').value
 
-      const signoutButton = document.getElementById('signout-button');
-      const messageArea = document.getElementById('message-area');
-      const authSection = document.getElementById('auth-section');
-      const dashboardSection = document.getElementById('dashboard-section');
-      const userEmailDisplay = document.getElementById('user-email');
+      const { error } = await supabase.auth.signUp({ email, password })
 
-      const signupForm = document.getElementById('signup-form');
-      const signinForm = document.getElementById('signin-form');
-      const showSignin = document.getElementById('show-signin');
-      const showSignup = document.getElementById('show-signup');
-
-      function showMessage(text, type) {
-        messageArea.textContent = text;
-        messageArea.className = `message ${type}`;
-        messageArea.classList.remove('hidden');
-        setTimeout(() => messageArea.classList.add('hidden'), 5000);
+      if (error) {
+        message.textContent = error.message
+      } else {
+        message.textContent = 'Check your email to confirm your signup!'
+        message.classList.remove('text-red-500')
+        message.classList.add('text-green-500')
       }
-
-      function updateUI(session) {
-        if (session?.user) {
-          authSection.classList.add('hidden');
-          dashboardSection.classList.remove('hidden');
-          userEmailDisplay.textContent = `Hello, ${session.user.email}!`;
-        } else {
-          authSection.classList.remove('hidden');
-          dashboardSection.classList.add('hidden');
-          signupForm.classList.remove('hidden');
-          signinForm.classList.add('hidden');
-        }
-      }
-
-      signupButton.addEventListener('click', async () => {
-        const email = signupEmail.value.trim();
-        const password = signupPassword.value;
-        if (!email || !password) return showMessage('Missing email or password', 'error');
-        if (password.length < 6) return showMessage('Password must be at least 6 characters', 'error');
-
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) return showMessage(error.message, 'error');
-
-        showMessage('Sign up successful! Check your email to confirm.', 'success');
-        signupForm.classList.add('hidden');
-        signinForm.classList.remove('hidden');
-      });
-
-      signinButton.addEventListener('click', async () => {
-        const email = signinEmail.value.trim();
-        const password = signinPassword.value;
-        if (!email || !password) return showMessage('Missing email or password', 'error');
-
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return showMessage(error.message, 'error');
-
-        showMessage('Signed in successfully!', 'success');
-      });
-
-      signoutButton.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) return showMessage(error.message, 'error');
-        showMessage('Signed out.', 'success');
-      });
-
-      showSignin.addEventListener('click', () => {
-        signupForm.classList.add('hidden');
-        signinForm.classList.remove('hidden');
-      });
-
-      showSignup.addEventListener('click', () => {
-        signinForm.classList.add('hidden');
-        signupForm.classList.remove('hidden');
-      });
-
-      const { data: { session } } = await supabase.auth.getSession();
-      updateUI(session);
-
-      supabase.auth.onAuthStateChange((_event, session) => updateUI(session));
-    });
+    })
   </script>
 </body>
 </html>

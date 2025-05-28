@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Email Verification</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Verifying...</h1>
+  <script>
+    const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN') {
+        document.body.innerHTML = '<h1>✅ Email Verified!</h1><p>You can now <a href="/river-services/">sign in</a>.</p>';
+      } else {
+        document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>Please try signing in again.</p>';
+      }
+    });
+
+    // This triggers a session update if the user just verified their email via link
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        document.body.innerHTML = '<h1>✅ Email Verified!</h1><p>You can now <a href="/river-services/">sign in</a>.</p>';
+      } else {
+        document.body.innerHTML = '<h1>❌ Verification Failed</h1><p>Please try signing in again.</p>';
+      }
+    })();
+  </script>
+</body>
+</html>

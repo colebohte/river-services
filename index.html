@@ -1,116 +1,296 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Login</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background-color: #f0f0f0;
-      margin: 0;
-    }
-    #status {
-      font-size: 1.2em;
-      color: #555;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supabase Auth System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Custom styles for Inter font and general layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            background-color: #4338ca;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .link-text {
+            color: #4f46e5;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 1rem;
+            display: block;
+        }
+        .link-text:hover {
+            color: #4338ca;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body>
-  <p id="status">Attempting to log in...</p>
+    <div class="container">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Supabase Auth</h1>
 
-  <script>
-    // Correctly initialize the Supabase client using window.supabase
-    const supabase = window.supabase.createClient(
-      "https://gxqbrcutslyybxexvszr.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4cWJyY3V0c2x5eWJ4ZXh2c3pyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3NTMxODYsImV4cCI6MjA2MjMyOTE4Nn0.yBF90TTgVBVihO5rH0HpK4DvKFfy4fGm3ps05vKeDjU" // Your anon key
-    );
+        <div id="auth-section">
+            <div id="signup-form" class="">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Sign Up</h2>
+                <input type="email" id="signup-email" placeholder="Email" class="mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="password" id="signup-password" placeholder="Password" class="mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <button id="signup-button">Sign Up</button>
+                <p class="text-sm text-gray-600 mt-4">Already have an account? <span class="link-text" id="show-signin">Sign In</span></p>
+            </div>
 
-    // Listen for authentication state changes
-    supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth state changed in popup:", event, "session:", session); // Log for debugging
-      const statusElement = document.getElementById('status');
+            <div id="signin-form" class="hidden">
+                <h2 class="text-2xl font-semibold mb-4 text-gray-700">Sign In</h2>
+                <input type="email" id="signin-email" placeholder="Email" class="mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <input type="password" id="signin-password" placeholder="Password" class="mb-4 focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                <button id="signin-button">Sign In</button>
+                <p class="text-sm text-gray-600 mt-4">Don't have an account? <span class="link-text" id="show-signup">Sign Up</span></p>
+            </div>
+        </div>
 
-      if (event === 'SIGNED_IN' && session) {
-        statusElement.innerText = 'Signed in. Returning to app...';
-        console.log("User signed in, sending message to opener..."); // Log for debugging
+        <div id="dashboard-section" class="hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-gray-700">Welcome!</h2>
+            <p id="user-email" class="text-lg text-gray-700 mb-6"></p>
+            <button id="signout-button" class="bg-red-500 hover:bg-red-600">Sign Out</button>
+        </div>
 
-        // Send the user data back to the window that opened this popup
-        // IMPORTANT: Replace '*' with the specific origin of your TurboWarp window
-        // For TurboWarp editor, use 'https://turbowarp.org'
-        // If embedding, use the origin of your embedding page (e.g., 'https://your-username.github.io')
-        if (window.opener) {
-           window.opener.postMessage({
-             type: "supabase-auth",
-             user: session.user
-           }, "https://turbowarp.org"); // <-- Set the correct targetOrigin here!
-           console.log("Message sent, closing popup..."); // Log for debugging
-           window.close(); // Close the popup after sending the data
-        } else {
-           statusElement.innerText = 'Signed in. No opener window found.';
-           statusElement.innerText = 'Signed in. User data request failed: No opener window found';
-           console.warn("No opener window found to send message to."); // Log if no opener
+        <div id="message-area" class="message hidden"></div>
+    </div>
+
+    <script>
+        // Initialize Supabase
+        // IMPORTANT: Replace these with your actual Supabase project URL and public API key
+        const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // e.g., 'https://abcdefg1234.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // e.g., 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Get DOM elements
+        const authSection = document.getElementById('auth-section');
+        const signupForm = document.getElementById('signup-form');
+        const signinForm = document.getElementById('signin-form');
+        const dashboardSection = document.getElementById('dashboard-section');
+
+        const signupEmailInput = document.getElementById('signup-email');
+        const signupPasswordInput = document.getElementById('signup-password');
+        const signupButton = document.getElementById('signup-button');
+
+        const signinEmailInput = document.getElementById('signin-email');
+        const signinPasswordInput = document.getElementById('signin-password');
+        const signinButton = document.getElementById('signin-button');
+
+        const signoutButton = document.getElementById('signout-button');
+        const userEmailDisplay = document.getElementById('user-email');
+
+        const showSigninLink = document.getElementById('show-signin');
+        const showSignupLink = document.getElementById('show-signup');
+        const messageArea = document.getElementById('message-area');
+
+        // Function to display messages
+        function showMessage(text, type) {
+            messageArea.textContent = text;
+            messageArea.className = `message ${type}`; // Apply success or error class
+            messageArea.classList.remove('hidden');
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+                messageArea.textContent = '';
+            }, 5000); // Hide message after 5 seconds
         }
 
-              console.log("Initial session message sent, closing popup..."); // Log for debugging
-              window.close(); // Close the popup
-           } else {
-               statusElement.innerText = 'Already signed in. No opener window found.';
-               statusElement.innerText = 'Already signed in. User data request failed: No opener window found.';
-               console.warn("No opener window found for initial session."); // Log if no opener
-           }
-      } else if (event === 'INITIAL_SESSION' && !session) {
-          // If no session initially, proceed to trigger the login
-          statusElement.innerText = 'Redirecting to Google...';
-           // Trigger Google login
-           supabase.auth.signInWithOAuth({
-             provider: "google",
-             options: {
-               // This must be the URL of THIS login.html page
-               redirectTo: "https://colebohte.github.io/river-services/login.html"
-             }
-           }).then(({ data, error }) => {
-               if (error) {
-                   console.error("OAuth sign in failed:", error); // Log error
-                   statusElement.innerText = 'Login failed: ' + error.message;
-               }
-               // Note: data will be null here because signInWithOAuth causes a redirect
-           });
-      }
-    });
+        // Function to update UI based on auth state
+        async function updateUI(session) {
+            if (session) {
+                // User is logged in
+                authSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+                userEmailDisplay.textContent = `Hello, ${session.user.email}!`;
+            } else {
+                // User is logged out or not authenticated
+                authSection.classList.remove('hidden');
+                dashboardSection.classList.add('hidden');
+                // Default to showing signup form if no session
+                signupForm.classList.remove('hidden');
+                signinForm.classList.add('hidden');
+            }
+        }
 
-    // Also handle cases where the page is loaded directly (e.g., after Google redirect)
-    // The onAuthStateChange listener for 'INITIAL_SESSION' should catch this,
-    // but checking getSession directly is a good fallback/initial check.
-     supabase.auth.getSession().then(({ data: { session } }) => {
-         if (session) {
-             console.log("Session found on direct load, sending to opener..."); // Log for debugging
-              const statusElement = document.getElementById('status');
-               statusElement.innerText = 'Session found. Returning to app...';
-              if (window.opener) {
-                 window.opener.postMessage(
-                    { type: "supabase-auth", user: session.user },
-                    "https://colebohte.github.io/river-services/login.html" // <-- Set the correct targetOrigin here!
-                );
-                console.log("Session found message sent, closing popup..."); // Log for debugging
-                window.close(); // Close the popup
-             } else {
-                 statusElement.innerText = 'Session found on direct load. No opener window found.';
-                 console.warn("No opener window found for session on direct load."); // Log if no opener
-             }
-         } else {
-              // If no session found initially, the onAuthStateChange listener will handle starting the flow
-              console.log("No session found on direct load, waiting for onAuthStateChange..."); // Log for debugging
-         }
-     }).catch(err => {
-         console.error("Error checking session on load:", err); // Log error
-         document.getElementById('status').innerText = 'Error checking session: ' + err.message;
-     });
+        // Event Listeners
 
+        // Sign Up
+        signupButton.addEventListener('click', async () => {
+            const email = signupEmailInput.value;
+            const password = signupPasswordInput.value;
 
-  </script>
+            if (!email || !password) {
+                showMessage('Please enter both email and password.', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    showMessage(error.message, 'error');
+                } else if (data.user) {
+                    showMessage('Sign up successful! Please check your email to confirm your account.', 'success');
+                    signupEmailInput.value = '';
+                    signupPasswordInput.value = '';
+                    // Optionally, switch to sign-in form after successful signup
+                    signupForm.classList.add('hidden');
+                    signinForm.classList.remove('hidden');
+                } else {
+                    // This case handles when data.user is null but no error (e.g., email already registered)
+                    showMessage('Sign up request sent. If this email is new, please check your inbox for a confirmation link.', 'success');
+                }
+            } catch (err) {
+                showMessage('An unexpected error occurred during sign up.', 'error');
+                console.error('Sign up error:', err);
+            }
+        });
+
+        // Sign In
+        signinButton.addEventListener('click', async () => {
+            const email = signinEmailInput.value;
+            const password = signinPasswordInput.value;
+
+            if (!email || !password) {
+                showMessage('Please enter both email and password.', 'error');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    showMessage(error.message, 'error');
+                } else if (data.user) {
+                    showMessage('Signed in successfully!', 'success');
+                    updateUI(data.session); // Update UI with the new session
+                    signinEmailInput.value = '';
+                    signinPasswordInput.value = '';
+                }
+            } catch (err) {
+                showMessage('An unexpected error occurred during sign in.', 'error');
+                console.error('Sign in error:', err);
+            }
+        });
+
+        // Sign Out
+        signoutButton.addEventListener('click', async () => {
+            try {
+                const { error } = await supabase.auth.signOut();
+                if (error) {
+                    showMessage(error.message, 'error');
+                } else {
+                    showMessage('Signed out successfully!', 'success');
+                    updateUI(null); // Clear UI after sign out
+                }
+            } catch (err) {
+                showMessage('An unexpected error occurred during sign out.', 'error');
+                console.error('Sign out error:', err);
+            }
+        });
+
+        // Toggle between Sign In and Sign Up forms
+        showSigninLink.addEventListener('click', () => {
+            signupForm.classList.add('hidden');
+            signinForm.classList.remove('hidden');
+            messageArea.classList.add('hidden'); // Hide any previous messages
+        });
+
+        showSignupLink.addEventListener('click', () => {
+            signinForm.classList.add('hidden');
+            signupForm.classList.remove('hidden');
+            messageArea.classList.add('hidden'); // Hide any previous messages
+        });
+
+        // Listen for auth state changes
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Auth state changed:', event, session);
+            updateUI(session);
+        });
+
+        // Initial check for session on page load
+        async function getInitialSession() {
+            try {
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error) {
+                    console.error('Error getting initial session:', error);
+                    updateUI(null);
+                } else {
+                    updateUI(session);
+                }
+            } catch (err) {
+                console.error('An unexpected error occurred during initial session check:', err);
+                updateUI(null);
+            }
+        }
+
+        // Call initial session check when the page loads
+        getInitialSession();
+
+    </script>
 </body>
 </html>

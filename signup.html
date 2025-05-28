@@ -4,8 +4,26 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Create a River Account</title>
-  <!-- Tailwind CDN (Dev Only!) -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+      /* Basic styling for Inter font and messages */
+      body {
+          font-family: 'Inter', sans-serif;
+      }
+      .message.success {
+          background-color: #d1fae5;
+          color: #065f46;
+          border: 1px solid #34d399;
+      }
+      .message.error {
+          background-color: #fee2e2;
+          color: #991b1b;
+          border: 1px solid #ef4444;
+      }
+      .hidden {
+          display: none;
+      }
+  </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center h-screen">
   <div class="bg-white p-8 rounded shadow-md w-full max-w-sm">
@@ -15,31 +33,46 @@
         type="email"
         id="email"
         placeholder="Email"
-        class="w-full px-4 py-2 border rounded"
+        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        required
+      />
+      <input
+        type="text"
+        id="username"
+        placeholder="Username (max 32 chars, no spaces/caps)"
+        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        maxlength="32"
         required
       />
       <input
         type="password"
         id="password"
         placeholder="Password"
-        class="w-full px-4 py-2 border rounded"
+        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        required
+      />
+      <input
+        type="password"
+        id="confirm-password"
+        placeholder="Confirm Password"
+        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         required
       />
       <button
         type="submit"
-        class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        id="signup-button"
+        class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
       >
         Sign Up
       </button>
     </form>
-        <p class="text-sm text-gray-600 mt-4">
-            Have an account? 
-            <a href="/river-services/signin" class="text-indigo-600 hover:text-indigo-800 underline">Sign In</a>
-        </p>
-    <div id="message" class="mt-4 text-sm text-center text-red-500"></div>
+    <p class="text-sm text-gray-600 mt-4">
+        Have an account?
+        <a href="/river-services/signin.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign In</a>
+    </p>
+    <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
   </div>
 
-  <!-- Supabase Client -->
   <script type="module">
     import { createClient } from 'https://esm.sh/@supabase/supabase-js'
 
@@ -48,22 +81,110 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
+    // Get DOM elements
     const form = document.getElementById('signup-form')
-    const message = document.getElementById('message')
+    const emailInput = document.getElementById('email')
+    const usernameInput = document.getElementById('username')
+    const passwordInput = document.getElementById('password')
+    const confirmPasswordInput = document.getElementById('confirm-password')
+    const signupButton = document.getElementById('signup-button')
+    const messageArea = document.getElementById('message-area')
 
+    /**
+     * Displays a message to the user in the message area.
+     * @param {string} text - The message text.
+     * @param {'success' | 'error'} type - The type of message (determines styling).
+     */
+    function showMessage(text, type) {
+        console.log(`${type.toUpperCase()}: ${text}`);
+        messageArea.textContent = text;
+        messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left message ${type}`;
+        messageArea.classList.remove('hidden');
+
+        setTimeout(() => {
+            messageArea.classList.add('hidden');
+        }, 5000);
+    }
+
+    /**
+     * Sets the loading state for the signup button.
+     * @param {boolean} loading - True to show loading state, false otherwise.
+     */
+    function setButtonLoading(loading) {
+        signupButton.disabled = loading;
+        signupButton.textContent = loading ? 'Signing Up...' : 'Sign Up';
+    }
+
+    // Handle form submission
     form.addEventListener('submit', async (e) => {
       e.preventDefault()
-      const email = document.getElementById('email').value
-      const password = document.getElementById('password').value
+      setButtonLoading(true); // Set button to loading state
 
-      const { error } = await supabase.auth.signUp({ email, password })
+      const email = emailInput.value.trim()
+      const username = usernameInput.value.trim()
+      const password = passwordInput.value
+      const confirmPassword = confirmPasswordInput.value
 
-      if (error) {
-        message.textContent = error.message
-      } else {
-        message.textContent = 'Check your email to confirm your signup!'
-        message.classList.remove('text-red-500')
-        message.classList.add('text-green-500')
+      // --- Validation Checks ---
+      if (password !== confirmPassword) {
+        showMessage('Passwords do not match.', 'error');
+        setButtonLoading(false);
+        return;
+      }
+
+      if (username.length === 0) {
+        showMessage('Username cannot be empty.', 'error');
+        setButtonLoading(false);
+        return;
+      }
+
+      if (username.length > 32) {
+        showMessage('Username cannot exceed 32 characters.', 'error');
+        setButtonLoading(false);
+        return;
+      }
+
+      if (username.includes(' ')) {
+        showMessage('Username cannot contain spaces.', 'error');
+        setButtonLoading(false);
+        return;
+      }
+
+      if (username !== username.toLowerCase()) {
+        showMessage('Username cannot contain capital letters.', 'error');
+        setButtonLoading(false);
+        return;
+      }
+      // --- End Validation Checks ---
+
+      try {
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                // Include username in user_metadata
+                data: { username: username },
+                // Redirect user to this URL after email confirmation
+                emailRedirectTo: 'https://colebohte.github.io/river-services/'
+            }
+        })
+
+        if (error) {
+          console.error('Sign up error:', error.message);
+          showMessage(error.message, 'error');
+        } else {
+          showMessage('Sign up successful! Please check your email to confirm your account.', 'success');
+          // Clear form fields after successful signup
+          emailInput.value = '';
+          usernameInput.value = '';
+          passwordInput.value = '';
+          confirmPasswordInput.value = '';
+        }
+      } catch (err) {
+          console.error('An unexpected error occurred during sign up:', err);
+          showMessage('An unexpected error occurred during sign up.', 'error');
+      } finally {
+          setButtonLoading(false); // Reset button state
       }
     })
   </script>

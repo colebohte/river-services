@@ -167,24 +167,22 @@
 
       try {
         const { error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-                // Include username and display_name in user_metadata
-                data: {
-                    username: username,
-                    display_name: username // Set display_name to be the same as username
-                },
-                // Redirect user to this URL after email confirmation
-                emailRedirectTo: 'https://colebohte.github.io/river-services/'
+          email,
+          password,
+          options: {
+            data: {
+              username: username,
+              display_name: username
             }
+            // Removed emailRedirectTo - let Supabase handle default redirect
+          }
         })
 
         if (error) {
           console.error('Sign up error:', error.message);
           showMessage(error.message, 'error');
         } else {
-          showMessage('Sign up successful! Please check your email to confirm your account.', 'success');
+          showMessage('Sign up successful! Check your email and click the confirmation link. Make sure to check spam folder too!', 'success');
           // Clear form fields after successful signup
           emailInput.value = '';
           usernameInput.value = '';

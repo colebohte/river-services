@@ -5,44 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In to River Account</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general layout */
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            padding: 1rem;
+        }
+        .container {
+            max-width: 400px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            margin-bottom: 1rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: #4f46e5;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        button:hover {
+            background-color: #4338ca;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .link-text {
+            color: #4f46e5;
+            cursor: pointer;
+            text-decoration: underline;
+            margin-top: 1rem;
+            display: block;
+        }
+        .link-text:hover {
+            color: #4338ca;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
 
-    <form id="signin-form" class="space-y-4">
-      <input
-        type="email"
-        id="signin-email"
-        placeholder="Email"
-        class="w-full px-4 py-2 border rounded"
-        required
-      />
-      <input
-        type="password"
-        id="signin-password"
-        placeholder="Password"
-        class="w-full px-4 py-2 border rounded"
-        required
-      />
-      <button
-        id="signin-button"
-        type="submit"
-        class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
-      >
-        Sign In
-      </button>
-    </form>
+        <form id="signin-form" class="space-y-4">
+            <input
+                type="email"
+                id="signin-email"
+                placeholder="Email"
+                class="w-full px-4 py-2 border rounded"
+                required
+            />
+            <input
+                type="password"
+                id="signin-password"
+                placeholder="Password"
+                class="w-full px-4 py-2 border rounded"
+                required
+            />
+            <button
+                id="signin-button"
+                type="submit"
+                class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+            >
+                Sign In
+            </button>
+        </form>
 
         <p class="text-sm text-gray-600 mt-4">
-            Don't have an account? 
+            Don't have an account?
             <a href="/river-services/signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
         </p>
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
 
-    <!-- Use the UNPKG CDN which works better -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
     <script>
@@ -51,20 +125,20 @@
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
 
             let supabaseClient;
-            
+
             try {
-                // Wait a bit for the script to load
+                // Wait a bit for the script to load (good practice, though DOMContentLoaded helps)
                 await new Promise(resolve => setTimeout(resolve, 100));
-                
-                // Check if the global supabase object exists
-                if (typeof window.supabase === 'undefined') {
+
+                // Check if the global Supabase object exists (correcting from window.supabase)
+                if (typeof Supabase === 'undefined') { // Corrected: Use 'Supabase' (capital S)
                     throw new Error('Supabase library failed to load');
                 }
-                
-                // Create the client using the global supabase object
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+                // Create the client using the global Supabase object (correcting from window.supabase)
+                supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Corrected: Use 'Supabase' (capital S)
                 console.log('Supabase client initialized successfully');
-                
+
             } catch (error) {
                 console.error('Supabase initialization failed:', error);
                 showMessage('Failed to initialize authentication system', 'error');
@@ -82,12 +156,12 @@
                 console.log(`${type.toUpperCase()}: ${text}`);
                 messageArea.textContent = text;
                 messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
-                    type === 'success' 
-                        ? 'bg-green-100 text-green-800 border border-green-300' 
+                    type === 'success'
+                        ? 'bg-green-100 text-green-800 border border-green-300'
                         : 'bg-red-100 text-red-800 border border-red-300'
                 }`;
                 messageArea.classList.remove('hidden');
-                
+
                 setTimeout(() => {
                     messageArea.classList.add('hidden');
                 }, 5000);
@@ -101,7 +175,7 @@
             // Handle form submission
             signinForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
+
                 const email = signinEmailInput.value.trim();
                 const password = signinPasswordInput.value;
 
@@ -124,11 +198,11 @@
                     } else if (data.user) {
                         console.log('Sign in successful:', data.user);
                         showMessage('Signed in successfully! Redirecting...', 'success');
-                        
+
                         // Clear form
                         signinEmailInput.value = '';
                         signinPasswordInput.value = '';
-                        
+
                         // Redirect after delay
                         setTimeout(() => {
                             window.location.href = '/river-services/account.html';
@@ -142,22 +216,31 @@
                 }
             });
 
-            // Check for existing session
+            // Check for existing session on page load
             async function checkExistingSession() {
+                console.log('Checking for existing session on signin page...');
                 try {
+                    // Calling getSession() here validates the session with Supabase backend.
+                    // If the user's session token is invalid, expired, or if the user account
+                    // has been deleted, 'session' will be null, and no redirect will occur.
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (session) {
-                        console.log('Existing session found, redirecting...');
+                        console.log('Valid existing session found, redirecting to account page.');
                         showMessage('Already signed in! Redirecting...', 'success');
                         setTimeout(() => {
                             window.location.href = '/river-services/account.html';
                         }, 1000);
+                    } else {
+                        console.log('No valid existing session found. Displaying sign-in form.');
+                        // No valid session, so the sign-in form remains visible.
                     }
                 } catch (err) {
                     console.error('Error checking session:', err);
+                    // If there's a network error or other issue during session check,
+                    // the sign-in form will remain visible, allowing the user to try logging in.
                 }
             }
-            
+
             checkExistingSession();
         });
     </script>

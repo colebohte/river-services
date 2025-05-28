@@ -46,7 +46,7 @@
         <h1 class="text-3xl font-bold mb-6 text-gray-800">My Account</h1>
 
         <div id="user-info" class="text-left mb-6">
-            <p class="text-gray-700 text-lg mb-2">Welcome, <span id="user-email" class="font-semibold text-indigo-600">Loading...</span></p>
+            <p class="text-gray-700 text-lg mb-2">Welcome, <span id="user-display-name" class="font-semibold text-indigo-600">Loading...</span></p>
             <p class="text-gray-500 text-sm">User ID: <span id="user-id" class="font-mono text-xs">Loading...</span></p>
         </div>
 
@@ -69,7 +69,8 @@
 
             let supabaseClient;
             const messageArea = document.getElementById('message-area');
-            const userEmailSpan = document.getElementById('user-email');
+            // Changed variable name to match new ID
+            const userDisplayNameSpan = document.getElementById('user-display-name');
             const userIdSpan = document.getElementById('user-id');
             const logoutButton = document.getElementById('logout-button');
 
@@ -135,7 +136,8 @@
                     }, 1500);
                 } else {
                     console.log('User session active. User:', user);
-                    userEmailSpan.textContent = user.email;
+                    // Display the display_name from user_metadata
+                    userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email; // Fallback to email if display_name isn't set
                     userIdSpan.textContent = user.id;
                 }
             }

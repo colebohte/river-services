@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My River Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        /* General styling for message area */
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .hidden {
+            display: none;
+        }
+        body {
+            background: url("bg.jpg");
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">My Account</h1>
+
+        <div id="user-info" class="text-left mb-6">
+            <p class="text-gray-700 text-lg mb-2"><span id="user-display-name" class="font-semibold text-indigo-600">Loading...</span>'s River Services</p>
+            <p class="text-gray-500 text-sm">User ID: <span id="user-id" class="font-mono text-xs">Loading...</span></p>
+        </div>
+        
+        <a href="tbp.html"><button id="services-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Tank Ball Physics</button></a><br><br>
+        <a href="account.html"><button id="back-button" class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200">Back</button></a>
+
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
+
+            let supabaseClient;
+            const messageArea = document.getElementById('message-area');
+            // Changed variable name to match new ID
+            const userDisplayNameSpan = document.getElementById('user-display-name');
+            const userIdSpan = document.getElementById('user-id');
+            const logoutButton = document.getElementById('logout-button');
+
+            function showMessage(text, type) {
+                console.log(`${type.toUpperCase()}: ${text}`);
+                if (messageArea) {
+                    messageArea.textContent = text;
+                    messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
+                        type === 'success'
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : 'bg-red-100 text-red-800 border border-red-300'
+                    }`;
+                    messageArea.classList.remove('hidden');
+                    setTimeout(() => {
+                        messageArea.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    console.error('Message area not found, cannot display message:', text);
+                }
+            }
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Give time for script to load
+
+                let SupabaseLib = null;
+                if (typeof supabase !== 'undefined') {
+                    SupabaseLib = supabase;
+                } else if (typeof Supabase !== 'undefined') {
+                    SupabaseLib = Supabase;
+                } else if (window.supabase) {
+                    SupabaseLib = window.supabase;
+                } else if (window.Supabase) {
+                    SupabaseLib = window.Supabase;
+                }
+
+                if (!SupabaseLib || !SupabaseLib.createClient) {
+                    throw new Error('Supabase library failed to load properly');
+                }
+
+                supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized successfully on account page');
+
+            } catch (error) {
+                console.error('Supabase initialization failed on account page:', error);
+                showMessage(`Authentication system unavailable: ${error.message}`, 'error');
+                // Redirect to signin if auth system is unavailable
+                setTimeout(() => {
+                    window.location.href = '/river-services/signin.html';
+                }, 2000);
+                return; // Stop further execution
+            }
+
+            // Function to check session and update UI
+            async function checkSessionAndDisplayUser() {
+                console.log('Checking session on account page...');
+                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+                if (userError || !user) {
+                    console.error('No active session or user found:', userError || 'User object null');
+                    showMessage('No active session found. Redirecting to sign in.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/river-services/signin.html';
+                    }, 1500);
+                } else {
+                    console.log('User session active. User:', user);
+                    // Display the display_name from user_metadata
+                    userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email; // Fallback to email if display_name isn't set
+                    userIdSpan.textContent = user.id;
+                }
+            }
+
+            // Handle logout
+            logoutButton.addEventListener('click', async () => {
+                console.log('Logout button clicked.');
+                setButtonLoading(true); // Assuming you'll add a setButtonLoading for logout button as well
+                const { error } = await supabaseClient.auth.signOut();
+
+                if (error) {
+                    console.error('Logout error:', error);
+                    showMessage(`Logout failed: ${error.message}`, 'error');
+                } else {
+                    console.log('Successfully logged out. Redirecting to signin page.');
+                    showMessage('Logged out successfully! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = '/river-services/signin.html';
+                    }, 1500);
+                }
+                setButtonLoading(false);
+            });
+
+            // Initial session check
+            checkSessionAndDisplayUser();
+
+            // Listen for auth state changes (e.g., if session expires or user logs out elsewhere)
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                console.log('Auth state change detected:', event, session);
+                if (event === 'SIGNED_OUT' || !session) {
+                    console.log('User signed out or session expired. Redirecting to signin page.');
+                    showMessage('Your session has ended. Redirecting to sign in.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/river-services/signin.html';
+                    }, 1500);
+                }
+            });
+
+            // Helper for logout button loading state (optional, but good practice)
+            function setButtonLoading(loading) {
+                logoutButton.disabled = loading;
+                logoutButton.textContent = loading ? 'Logging Out...' : 'Logout';
+            }
+        });
+    </script>
+</body>
+</html>

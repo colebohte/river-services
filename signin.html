@@ -57,7 +57,7 @@
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
 
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
@@ -93,21 +93,38 @@
             }
 
             try {
-                // Wait a bit for the script to load (good practice, though DOMContentLoaded helps)
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Wait for script to fully load
+                await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Check if the global Supabase object exists - FIXED: Use capital S
-                if (typeof Supabase === 'undefined') {
-                    throw new Error('Supabase library failed to load');
+                // Check multiple possible global objects that Supabase might create
+                let SupabaseLib = null;
+                if (typeof supabase !== 'undefined') {
+                    SupabaseLib = supabase;
+                } else if (typeof Supabase !== 'undefined') {
+                    SupabaseLib = Supabase;
+                } else if (window.supabase) {
+                    SupabaseLib = window.supabase;
+                } else if (window.Supabase) {
+                    SupabaseLib = window.Supabase;
                 }
 
-                // Create the client using the global Supabase object - FIXED: Use capital S
-                supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                if (!SupabaseLib || !SupabaseLib.createClient) {
+                    throw new Error('Supabase library failed to load properly');
+                }
+
+                // Create the client
+                supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 console.log('Supabase client initialized successfully');
+
+                // Test the client with a simple call
+                const { error: testError } = await supabaseClient.auth.getSession();
+                if (testError && testError.message && !testError.message.includes('session')) {
+                    throw new Error(`Supabase client test failed: ${testError.message}`);
+                }
 
             } catch (error) {
                 console.error('Supabase initialization failed:', error);
-                showMessage('Failed to initialize authentication system', 'error');
+                showMessage(`Authentication system unavailable: ${error.message}`, 'error');
                 return;
             }
 

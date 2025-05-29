@@ -248,7 +248,7 @@
 
                 if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
                     console.error('Error fetching TBP service status:', error);
-                    showMessage(`Error checking TBP status: ${error.message}`, 'error', messageAreaServices);
+                    // showMessage(`Error checking TBP status: ${error.message}`, 'error', messageAreaServices); // Removed alert
                     setTBPButtonState('disabled'); // Default to disabled on error
                     return;
                 }
@@ -258,12 +258,12 @@
                     currentTBPLinkCode = tbpService.TBPLinkCode;
                     tbpLinkCodeSpan.textContent = currentTBPLinkCode; // Display the code
                     setTBPButtonState('enabled');
-                    showMessage('Tank Ball Physics service is enabled.', 'success', messageAreaServices);
+                    // showMessage('Tank Ball Physics service is enabled.', 'success', messageAreaServices); // Removed alert
                 } else {
                     // Service is not enabled
                     currentTBPLinkCode = null;
                     setTBPButtonState('disabled');
-                    showMessage('Tank Ball Physics service is currently disabled.', 'info', messageAreaServices); // Using 'info' here for a neutral message
+                    // showMessage('Tank Ball Physics service is currently disabled.', 'info', messageAreaServices); // Removed alert
                 }
             }
 
@@ -347,32 +347,32 @@
                         if (error) {
                             console.error('Error inserting TBP Link Code:', error);
                             if (error.code === '23505') { // PostgreSQL unique violation error code
-                                showMessage('Service already enabled or code conflict. Please try again or contact support.', 'error', messageAreaServices);
+                                // showMessage('Service already enabled or code conflict. Please try again or contact support.', 'error', messageAreaServices); // Removed alert
                             } else {
-                                showMessage(`Failed to enable service: ${error.message}`, 'error', messageAreaServices);
+                                // showMessage(`Failed to enable service: ${error.message}`, 'error', messageAreaServices); // Removed alert
                             }
                         } else {
                             console.log('TBP Link Code inserted successfully:', data);
-                            showMessage('Service enabled successfully!', 'success', messageAreaServices); // Removed code from message
+                            // showMessage('Service enabled successfully!', 'success', messageAreaServices); // Removed alert
                             currentTBPLinkCode = newCode; // Store the new code
                             tbpLinkCodeSpan.textContent = currentTBPLinkCode; // Display the new code
                             setTBPButtonState('enabled'); // Update button to 'Disable'
                         }
                     } catch (err) {
                         console.error('Unexpected error during TBP service enablement:', err);
-                        showMessage('An unexpected error occurred while enabling service.', 'error', messageAreaServices);
+                        // showMessage('An unexpected error occurred while enabling service.', 'error', messageAreaServices); // Removed alert
                     } finally {
                         setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
                     }
 
                 } else if (enableTBPButton.textContent === 'Disable Service') {
-                    // Confirmation dialog before disabling
-                    const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
+                    // Confirmation dialog before disabling - REMOVED AS PER REQUEST
+                    // const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
                     
-                    if (!confirmDeactivation) {
-                        showMessage('Service deactivation cancelled.', 'info', messageAreaServices);
-                        return; // Stop the function if user cancels
-                    }
+                    // if (!confirmDeactivation) {
+                    //     showMessage('Service deactivation cancelled.', 'info', messageAreaServices); // Removed alert
+                    //     return; // Stop the function if user cancels
+                    // }
 
                     console.log('Disable Service button clicked.');
                     setButtonLoading(true, enableTBPButton, 'Disable Service', 'Disabling...');
@@ -387,16 +387,16 @@
 
                         if (error) {
                             console.error('Error disabling TBP service:', error);
-                            showMessage(`Failed to disable service: ${error.message}`, 'error', messageAreaServices);
+                            // showMessage(`Failed to disable service: ${error.message}`, 'error', messageAreaServices); // Removed alert
                         } else {
                             console.log('TBP Service disabled successfully.');
-                            showMessage('Service disabled successfully!', 'success', messageAreaServices);
+                            // showMessage('Service disabled successfully!', 'success', messageAreaServices); // Removed alert
                             currentTBPLinkCode = null; // Clear the stored code
                             setTBPButtonState('disabled'); // Change button back to "Enable"
                         }
                     } catch (err) {
                         console.error('Unexpected error during TBP service disablement:', err);
-                        showMessage('An unexpected error occurred while disabling service.', 'error', messageAreaServices);
+                        // showMessage('An unexpected error occurred while disabling service.', 'error', messageAreaServices); // Removed alert
                     } finally {
                         setButtonLoading(false, enableTBPButton, 'Disable Service', 'Disabling...');
                     }
@@ -431,13 +431,13 @@
                         tempInput.select();
                         document.execCommand('copy');
                         document.body.removeChild(tempInput);
-                        showMessage('Link code copied to clipboard!', 'success', messageAreaServices);
+                        // showMessage('Link code copied to clipboard!', 'success', messageAreaServices); // Removed alert
                     } catch (err) {
                         console.error('Failed to copy text:', err);
-                        showMessage('Failed to copy code. Please copy manually.', 'error', messageAreaServices);
+                        // showMessage('Failed to copy code. Please copy manually.', 'error', messageAreaServices); // Removed alert
                     }
                 } else {
-                    showMessage('No link code to copy.', 'info', messageAreaServices);
+                    // showMessage('No link code to copy.', 'info', messageAreaServices); // Removed alert
                 }
             });
             // --- End New Show/Hide and Copy Functionality ---

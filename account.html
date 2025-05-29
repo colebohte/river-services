@@ -217,9 +217,12 @@
                 console.log('Enable Service button clicked for Tank Ball Physics.');
                 setButtonLoading(true, enableTBPButton, 'Enable Service', 'Enabling...');
 
-                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                // No need to fetch user explicitly if RLS is configured to use auth.uid()
+                // The RLS policy will ensure the user_id is set based on the authenticated session.
+                // We just need to ensure there IS an active session.
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
-                if (userError || !user) {
+                if (sessionError || !session) {
                     showMessage('You must be logged in to enable services. Redirecting to sign in.', 'error', messageAreaServices);
                     setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
                     setTimeout(() => {
@@ -233,10 +236,11 @@
                     console.log('Generated TBP Link Code:', newCode);
 
                     // Insert the new code into the 'tbp_data' table
+                    // Removed user_id as per your request, relying on RLS to set it
                     const { data, error } = await supabaseClient
                         .from('tbp_data')
                         .insert([
-                            { TBPLinkCode: newCode, user_id: user.id } // Link the code to the current user
+                            { TBPLinkCode: newCode }
                         ]);
 
                     if (error) {

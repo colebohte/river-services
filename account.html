@@ -201,10 +201,17 @@
              */
             async function checkTBPServiceStatus(userId) {
                 console.log('Checking Tank Ball Physics service status...');
+                // Ensure userId is available before making the query
+                if (!userId) {
+                    console.warn('User ID not available for checking TBP service status.');
+                    setTBPButtonState('disabled');
+                    return;
+                }
+
                 const { data: tbpService, error } = await supabaseClient
                     .from('tbp_data')
                     .select('TBPLinkCode')
-                    .eq('user_id', userId)
+                    .eq('user_id', userId) // Using userId parameter here
                     .single(); // Use single() as we expect at most one entry per user
 
                 if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
@@ -277,6 +284,15 @@
                     }, 1500);
                     return;
                 }
+                
+                // Get the user object from the session for the user ID
+                const user = session.user;
+                if (!user) {
+                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
+                    setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
+                    return;
+                }
+
 
                 // Determine if we are enabling or disabling based on current button text
                 if (enableTBPButton.textContent === 'Enable Service') {
@@ -288,11 +304,11 @@
                         console.log('Generated TBP Link Code:', newCode);
 
                         // Insert the new code into the 'tbp_data' table.
-                        // user_id is NOT explicitly sent here, relying on RLS/DEFAULT auth.uid()
+                        // We explicitly send user_id here to satisfy RLS policy that checks auth.uid() = user_id
                         const { data, error } = await supabaseClient
                             .from('tbp_data')
                             .insert([
-                                { TBPLinkCode: newCode }
+                                { TBPLinkCode: newCode, user_id: user.id } // Explicitly sending user.id
                             ]);
 
                         if (error) {
@@ -324,6 +340,7 @@
                         const { error } = await supabaseClient
                             .from('tbp_data')
                             .delete()
+                            .eq('user_id', user.id) // Explicitly filtering by user_id for deletion
                             .eq('TBPLinkCode', currentTBPLinkCode); // Delete by code, RLS will ensure it's owned by current user
 
                         if (error) {
@@ -343,7 +360,7 @@
                     }
                 }
                 // After any action, re-check the status to ensure UI is consistent
-                await checkTBPServiceStatus(session.user.id);
+                await checkTBPServiceStatus(user.id);
             });
 
             // --- End New Functionality ---

@@ -265,10 +265,13 @@
 
             // Handle "Enable/Disable Service" button click
             enableTBPButton.addEventListener('click', async () => {
-                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                // We still need to get the user's session to ensure they are authenticated
+                // and for the RLS policy to work correctly based on auth.uid()
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
-                if (userError || !user) {
+                if (sessionError || !session) {
                     showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
+                    setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
                     setTimeout(() => {
                         window.location.href = '/river-services/signin.html';
                     }, 1500);
@@ -284,11 +287,12 @@
                         const newCode = generateTBPLinkCode();
                         console.log('Generated TBP Link Code:', newCode);
 
-                        // Insert the new code into the 'tbp_data' table, including the user_id
+                        // Insert the new code into the 'tbp_data' table.
+                        // user_id is NOT explicitly sent here, relying on RLS/DEFAULT auth.uid()
                         const { data, error } = await supabaseClient
                             .from('tbp_data')
                             .insert([
-                                { TBPLinkCode: newCode, user_id: user.id }
+                                { TBPLinkCode: newCode }
                             ]);
 
                         if (error) {
@@ -316,13 +320,11 @@
                     setButtonLoading(true, enableTBPButton, 'Disable Service', 'Disabling...');
 
                     try {
-                        // Delete the row based on user_id and the stored TBPLinkCode
-                        // Deleting by user_id AND TBPLinkCode provides robust security and specificity
+                        // Delete the row based on user_id (inferred by RLS) and the stored TBPLinkCode
                         const { error } = await supabaseClient
                             .from('tbp_data')
                             .delete()
-                            .eq('user_id', user.id)
-                            .eq('TBPLinkCode', currentTBPLinkCode); // Use the stored code for deletion
+                            .eq('TBPLinkCode', currentTBPLinkCode); // Delete by code, RLS will ensure it's owned by current user
 
                         if (error) {
                             console.error('Error disabling TBP service:', error);
@@ -340,6 +342,8 @@
                         setButtonLoading(false, enableTBPButton, 'Disable Service', 'Disabling...');
                     }
                 }
+                // After any action, re-check the status to ensure UI is consistent
+                await checkTBPServiceStatus(session.user.id);
             });
 
             // --- End New Functionality ---

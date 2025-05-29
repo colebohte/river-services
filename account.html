@@ -41,6 +41,8 @@
         }
         body {
             background: url("bg.jpg");
+            background-size: cover;
+            background-position: center;
         }
     </style>
 </head>
@@ -51,9 +53,10 @@
         <div id="user-info" class="text-left mb-6">
             <p class="text-gray-700 text-lg mb-2">Welcome, <span id="user-display-name" class="font-semibold text-indigo-600">Loading...</span></p>
             <p class="text-gray-500 text-sm">User ID: <span id="user-id" class="font-mono text-xs">Loading...</span></p>
+            <p class="text-gray-500 text-sm">Email: <span id="user-email" class="font-mono text-xs">Loading...</span></p>
         </div>
         
-        <a href="services.html"><button id="services-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Change Username</button></a><br><br>
+        <a href="services.html"><button id="services-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">River Services</button></a><br><br>
         <button id="logout-button" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200">Logout</button>
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
@@ -63,9 +66,9 @@
         <h1 class="text-3xl font-bold mb-6 text-gray-800">River Services</h1><br><br>
         
         <h3 class="text-2xl font-bold mb-6 text-gray-800">Tank Ball Physics</h3><hr>
-        <a href="services.html"><button id="services-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button></a><br><br>
+        <a href="tbp.html"><button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button></a><br><br>
 
-        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+        <div id="message-area-services" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
@@ -77,10 +80,14 @@
 
             let supabaseClient;
             const messageArea = document.getElementById('message-area');
-            // Changed variable name to match new ID
             const userDisplayNameSpan = document.getElementById('user-display-name');
             const userIdSpan = document.getElementById('user-id');
+            const userEmailSpan = document.getElementById('user-email'); // Get the email span
             const logoutButton = document.getElementById('logout-button');
+
+            // Note: There are two message areas with the same ID. This might cause issues.
+            // For now, the first one will be used. Consider unique IDs if both are needed.
+            const messageAreaServices = document.getElementById('message-area-services'); 
 
             function showMessage(text, type) {
                 console.log(`${type.toUpperCase()}: ${text}`);
@@ -147,6 +154,7 @@
                     // Display the display_name from user_metadata
                     userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email; // Fallback to email if display_name isn't set
                     userIdSpan.textContent = user.id;
+                    userEmailSpan.textContent = user.email; // Set the email here
                 }
             }
 

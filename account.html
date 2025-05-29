@@ -66,6 +66,9 @@
         <h1 class="text-3xl font-bold mb-6 text-gray-800">River Services</h1><br><br>
         
         <h3 class="text-2xl font-bold mb-6 text-gray-800">Tank Ball Physics</h3><hr>
+        <p id="tbp-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
+            Your Link Code: <span class="font-mono text-indigo-600"></span>
+        </p>
         <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br>
 
         <div id="message-area-services" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
@@ -89,6 +92,8 @@
             const userEmailSpan = document.getElementById('user-email');
             const logoutButton = document.getElementById('logout-button');
             const enableTBPButton = document.getElementById('enable-tbp-button'); // Get the new button
+            const tbpLinkDisplay = document.getElementById('tbp-link-display'); // Get the new TBP link display element
+            const tbpLinkCodeSpan = tbpLinkDisplay.querySelector('span'); // Get the span inside the TBP link display
 
             let currentTBPLinkCode = null; // Variable to store the TBP Link Code if service is enabled
 
@@ -165,10 +170,13 @@
                     enableTBPButton.textContent = 'Disable Service';
                     enableTBPButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     enableTBPButton.classList.add('bg-red-500', 'hover:bg-red-600');
+                    tbpLinkDisplay.classList.remove('hidden'); // Show the link display
                 } else { // state === 'disabled'
                     enableTBPButton.textContent = 'Enable Service';
                     enableTBPButton.classList.remove('bg-red-500', 'hover:bg-red-600');
                     enableTBPButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    tbpLinkDisplay.classList.add('hidden'); // Hide the link display
+                    tbpLinkCodeSpan.textContent = ''; // Clear the code
                 }
             }
 
@@ -224,8 +232,9 @@
                 if (tbpService) {
                     // Service is enabled
                     currentTBPLinkCode = tbpService.TBPLinkCode;
+                    tbpLinkCodeSpan.textContent = currentTBPLinkCode; // Display the code
                     setTBPButtonState('enabled');
-                    showMessage(`Tank Ball Physics service is enabled. Your code: ${currentTBPLinkCode}`, 'success', messageAreaServices);
+                    showMessage('Tank Ball Physics service is enabled.', 'success', messageAreaServices);
                 } else {
                     // Service is not enabled
                     currentTBPLinkCode = null;
@@ -320,8 +329,9 @@
                             }
                         } else {
                             console.log('TBP Link Code inserted successfully:', data);
-                            showMessage(`Service enabled! Your code: ${newCode}`, 'success', messageAreaServices);
+                            showMessage('Service enabled successfully!', 'success', messageAreaServices); // Removed code from message
                             currentTBPLinkCode = newCode; // Store the new code
+                            tbpLinkCodeSpan.textContent = currentTBPLinkCode; // Display the new code
                             setTBPButtonState('enabled'); // Update button to 'Disable'
                         }
                     } catch (err) {

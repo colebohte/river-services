@@ -44,6 +44,15 @@
             background-size: cover;
             background-position: center;
         }
+        /* Style for blurring the link code */
+        .blur-sm {
+            filter: blur(4px);
+            transition: filter 0.2s ease-in-out;
+        }
+        .no-blur {
+            filter: blur(0);
+            transition: filter 0.2s ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
@@ -67,7 +76,9 @@
         
         <h3 class="text-2xl font-bold mb-6 text-gray-800">Tank Ball Physics</h3><hr>
         <p id="tbp-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600"></span>
+            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="tbp-code-span"></span>
+            <button id="toggle-code-visibility" class="ml-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+            <button id="copy-code-button" class="ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
         </p>
         <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br>
 
@@ -93,25 +104,32 @@
             const logoutButton = document.getElementById('logout-button');
             const enableTBPButton = document.getElementById('enable-tbp-button'); // Get the new button
             const tbpLinkDisplay = document.getElementById('tbp-link-display'); // Get the new TBP link display element
-            const tbpLinkCodeSpan = tbpLinkDisplay.querySelector('span'); // Get the span inside the TBP link display
+            const tbpLinkCodeSpan = document.getElementById('tbp-code-span'); // Get the span that holds the actual code
+            const toggleCodeVisibilityButton = document.getElementById('toggle-code-visibility'); // New show/hide button
+            const copyCodeButton = document.getElementById('copy-code-button'); // New copy button
 
             let currentTBPLinkCode = null; // Variable to store the TBP Link Code if service is enabled
+            let isCodeVisible = false; // Track the visibility state of the code
 
             /**
              * Displays a message to the user in a specified message area.
              * @param {string} text - The message text.
-             * @param {'success' | 'error'} type - The type of message (determines styling).
+             * @param {'success' | 'error' | 'info'} type - The type of message (determines styling).
              * @param {HTMLElement} targetMessageArea - The DOM element where the message should be displayed.
              */
             function showMessage(text, type, targetMessageArea) {
                 console.log(`${type.toUpperCase()}: ${text}`);
                 if (targetMessageArea) {
                     targetMessageArea.textContent = text;
-                    targetMessageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
-                        type === 'success'
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                    }`;
+                    let className = 'mt-4 p-3 rounded-lg text-sm text-left';
+                    if (type === 'success') {
+                        className += ' bg-green-100 text-green-800 border border-green-300';
+                    } else if (type === 'error') {
+                        className += ' bg-red-100 text-red-800 border border-red-300';
+                    } else if (type === 'info') {
+                        className += ' bg-blue-100 text-blue-800 border border-blue-300'; // Added info styling
+                    }
+                    targetMessageArea.className = className;
                     targetMessageArea.classList.remove('hidden');
                     setTimeout(() => {
                         targetMessageArea.classList.add('hidden');
@@ -164,19 +182,25 @@
                 return; // Stop further execution
             }
 
-            // Function to set the visual state of the TBP button
+            // Function to set the visual state of the TBP button and link display
             function setTBPButtonState(state) {
                 if (state === 'enabled') {
                     enableTBPButton.textContent = 'Disable Service';
                     enableTBPButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
                     enableTBPButton.classList.add('bg-red-500', 'hover:bg-red-600');
-                    tbpLinkDisplay.classList.remove('hidden'); // Show the link display
+                    tbpLinkDisplay.classList.remove('hidden'); // Show the link display container
+                    // Ensure code is blurred by default when enabled
+                    tbpLinkCodeSpan.classList.add('blur-sm');
+                    tbpLinkCodeSpan.classList.remove('no-blur');
+                    toggleCodeVisibilityButton.textContent = 'Show Code';
+                    isCodeVisible = false;
                 } else { // state === 'disabled'
                     enableTBPButton.textContent = 'Enable Service';
                     enableTBPButton.classList.remove('bg-red-500', 'hover:bg-red-600');
                     enableTBPButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                    tbpLinkDisplay.classList.add('hidden'); // Hide the link display
+                    tbpLinkDisplay.classList.add('hidden'); // Hide the link display container
                     tbpLinkCodeSpan.textContent = ''; // Clear the code
+                    currentTBPLinkCode = null; // Clear stored code
                 }
             }
 
@@ -382,6 +406,42 @@
             });
 
             // --- End New Functionality ---
+
+            // --- New Show/Hide and Copy Functionality ---
+            toggleCodeVisibilityButton.addEventListener('click', () => {
+                if (isCodeVisible) {
+                    tbpLinkCodeSpan.classList.add('blur-sm');
+                    tbpLinkCodeSpan.classList.remove('no-blur');
+                    toggleCodeVisibilityButton.textContent = 'Show Code';
+                } else {
+                    tbpLinkCodeSpan.classList.remove('blur-sm');
+                    tbpLinkCodeSpan.classList.add('no-blur');
+                    toggleCodeVisibilityButton.textContent = 'Hide Code';
+                }
+                isCodeVisible = !isCodeVisible;
+            });
+
+            copyCodeButton.addEventListener('click', async () => {
+                if (currentTBPLinkCode) {
+                    try {
+                        // Use document.execCommand('copy') as navigator.clipboard.writeText() might not work in iframes
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = currentTBPLinkCode;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                        showMessage('Link code copied to clipboard!', 'success', messageAreaServices);
+                    } catch (err) {
+                        console.error('Failed to copy text:', err);
+                        showMessage('Failed to copy code. Please copy manually.', 'error', messageAreaServices);
+                    }
+                } else {
+                    showMessage('No link code to copy.', 'info', messageAreaServices);
+                }
+            });
+            // --- End New Show/Hide and Copy Functionality ---
+
 
             // Handle logout
             logoutButton.addEventListener('click', async () => {

@@ -366,13 +366,13 @@
                     }
 
                 } else if (enableTBPButton.textContent === 'Disable Service') {
-                    // Confirmation dialog before disabling - REMOVED AS PER REQUEST
-                    // const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
+                    // Confirmation dialog before disabling - RE-ADDED
+                    const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
                     
-                    // if (!confirmDeactivation) {
-                    //     showMessage('Service deactivation cancelled.', 'info', messageAreaServices); // Removed alert
-                    //     return; // Stop the function if user cancels
-                    // }
+                    if (!confirmDeactivation) {
+                        showMessage('Service deactivation cancelled.', 'info', messageAreaServices); // Re-added message
+                        return; // Stop the function if user cancels
+                    }
 
                     console.log('Disable Service button clicked.');
                     setButtonLoading(true, enableTBPButton, 'Disable Service', 'Disabling...');

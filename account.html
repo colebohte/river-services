@@ -370,7 +370,7 @@
                     const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
                     
                     if (!confirmDeactivation) {
-                        showMessage('Service deactivation cancelled.', 'info', messageAreaServices); // Re-added message
+                        // showMessage('Service deactivation cancelled.', 'info', messageAreaServices); // Removed this line
                         return; // Stop the function if user cancels
                     }
 

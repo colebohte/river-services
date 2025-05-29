@@ -78,14 +78,16 @@
         
         <h3 class="text-2xl font-bold mb-6 text-gray-800">Tank Ball Physics</h3>
         <p id="tbp-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="tbp-code-span"></span><br> <button id="toggle-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="tbp-code-span"></span><br> 
+            <button id="toggle-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
             <button id="copy-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
         </p>
         <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
 
         <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Citygrid</h3>
         <p id="citygrid-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="citygrid-code-span"></span><br> <button id="toggle-citygrid-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="citygrid-code-span"></span><br> 
+            <button id="toggle-citygrid-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
             <button id="copy-citygrid-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
         </p>
         <button id="enable-citygrid-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
@@ -410,6 +412,12 @@
 
                 // Determine if we are enabling or disabling based on current button text
                 if (enableTBPButton.textContent === 'Enable Service') {
+                    // Confirmation for TOS
+                    const confirmTOS = confirm("By enabling this service, you agree to the Tank Ball Physics Terms of Service (colebohte.github.io/tos)");
+                    if (!confirmTOS) {
+                        return; // Stop if user cancels
+                    }
+
                     console.log('Enable Service button clicked for Tank Ball Physics.');
                     setButtonLoading(true, enableTBPButton, 'Enable Service', 'Enabling...');
 
@@ -538,6 +546,11 @@
                 }
 
                 if (enableCitygridButton.textContent === 'Enable Service') {
+                    const confirmTOS = confirm("By enabling this service, you agree to the Citygrid Terms of Service (colebohte.github.io/tos)"); // Added TOS for Citygrid
+                    if (!confirmTOS) {
+                        return; // Stop if user cancels
+                    }
+
                     console.log('Enable Service button clicked for Citygrid.');
                     setButtonLoading(true, enableCitygridButton, 'Enable Service', 'Enabling...');
 

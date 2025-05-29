@@ -84,14 +84,6 @@
         </p>
         <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
 
-        <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Citygrid</h3>
-        <p id="citygrid-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="citygrid-code-span"></span><br> 
-            <button id="toggle-citygrid-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
-            <button id="copy-citygrid-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
-        </p>
-        <button id="enable-citygrid-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br>
-        <p class="text-gray-500 text-sm">Partnership with phoenixcoe</p><br><hr>
         <div id="message-area-services" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
 
@@ -120,20 +112,8 @@
             const toggleCodeVisibilityButton = document.getElementById('toggle-code-visibility');
             const copyCodeButton = document.getElementById('copy-code-button');
 
-            // Citygrid Elements
-            const enableCitygridButton = document.getElementById('enable-citygrid-button');
-            const citygridLinkDisplay = document.getElementById('citygrid-link-display');
-            const citygridLinkCodeSpan = document.getElementById('citygrid-code-span');
-            const toggleCitygridCodeVisibilityButton = document.getElementById('toggle-citygrid-code-visibility');
-            const copyCitygridCodeButton = document.getElementById('copy-citygrid-code-button');
-
-
             let currentTBPLinkCode = null; // Variable to store the TBP Link Code if service is enabled
             let isTBPCodeVisible = false; // Track the visibility state of the TBP code
-
-            let currentCitygridLinkCode = null; // Variable to store the Citygrid Link Code if service is enabled
-            let isCitygridCodeVisible = false; // Track the visibility state of the Citygrid code
-
 
             /**
              * Displays a message to the user in a specified message area.
@@ -228,29 +208,6 @@
                 }
             }
 
-            // Function to set the visual state of the Citygrid button and link display
-            function setCitygridButtonState(state) {
-                if (state === 'enabled') {
-                    enableCitygridButton.textContent = 'Disable Service';
-                    enableCitygridButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-                    enableCitygridButton.classList.add('bg-red-500', 'hover:bg-red-600');
-                    citygridLinkDisplay.classList.remove('hidden'); // Show the link display container
-                    // Ensure code is blurred by default when enabled
-                    citygridLinkCodeSpan.classList.add('blur-sm');
-                    citygridLinkCodeSpan.classList.remove('no-blur');
-                    toggleCitygridCodeVisibilityButton.textContent = 'Show Code';
-                    isCitygridCodeVisible = false;
-                } else { // state === 'disabled'
-                    enableCitygridButton.textContent = 'Enable Service';
-                    enableCitygridButton.classList.remove('bg-red-500', 'hover:bg-red-600');
-                    enableCitygridButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
-                    citygridLinkDisplay.classList.add('hidden'); // Hide the link display container
-                    citygridLinkCodeSpan.textContent = ''; // Clear the code
-                    currentCitygridLinkCode = null; // Clear stored code
-                }
-            }
-
-
             // Function to check session and update UI
             async function checkSessionAndDisplayUser() {
                 console.log('Checking session on account page...');
@@ -270,8 +227,6 @@
 
                     // Now, check TBP service status for this user
                     await checkTBPServiceStatus(user.id);
-                    // And check Citygrid service status for this user
-                    await checkCitygridServiceStatus(user.id);
                 }
             }
 
@@ -315,42 +270,6 @@
                     // showMessage('Tank Ball Physics service is currently disabled.', 'info', messageAreaServices); // Removed alert
                 }
             }
-
-            /**
-             * Checks if the Citygrid service is enabled for the given user.
-             * Updates the button state and stores the CitygridLinkCode if found.
-             * @param {string} userId - The UUID of the current user.
-             */
-            async function checkCitygridServiceStatus(userId) {
-                console.log('Checking Citygrid service status...');
-                if (!userId) {
-                    console.warn('User ID not available for checking Citygrid service status.');
-                    setCitygridButtonState('disabled');
-                    return;
-                }
-
-                const { data: citygridService, error } = await supabaseClient
-                    .from('citygrid_data') // Assuming 'citygrid_data' is your new table
-                    .select('CitygridLinkCode')
-                    .eq('user_id', userId)
-                    .single();
-
-                if (error && error.code !== 'PGRST116') {
-                    console.error('Error fetching Citygrid service status:', error);
-                    setCitygridButtonState('disabled');
-                    return;
-                }
-
-                if (citygridService) {
-                    currentCitygridLinkCode = citygridService.CitygridLinkCode;
-                    citygridLinkCodeSpan.textContent = currentCitygridLinkCode;
-                    setCitygridButtonState('enabled');
-                } else {
-                    currentCitygridLinkCode = null;
-                    setCitygridButtonState('disabled');
-                }
-            }
-
 
             // --- New Functionality for Tank Ball Physics Service ---
 
@@ -497,167 +416,6 @@
 
             // --- End New Functionality ---
 
-            // --- New Citygrid Functionality ---
-
-            /**
-             * Generates a unique code for Citygrid.
-             * @returns {string} The generated code.
-             */
-            function generateCitygridLinkCode() {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                const digits = '0123456789';
-
-                const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
-                const getRandomDigit = () => digits.charAt(Math.floor(Math.random() * digits.length));
-
-                // Example format: CG-XXXX-NNNN-YYYY
-                let part1 = 'CG';
-                for (let i = 0; i < 4; i++) {
-                    part1 += getRandomChar();
-                }
-                let part2 = '';
-                for (let i = 0; i < 4; i++) {
-                    part2 += getRandomDigit();
-                }
-                let part3 = '';
-                for (let i = 0; i < 4; i++) {
-                    part3 += getRandomChar();
-                }
-                return `${part1}-${part2}-${part3}`;
-            }
-
-            // Handle "Enable/Disable Citygrid Service" button click
-            enableCitygridButton.addEventListener('click', async () => {
-                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-
-                if (sessionError || !session) {
-                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableCitygridButton, 'Enable Service', 'Enabling...');
-                    setTimeout(() => {
-                        window.location.href = '/river-services/signin.html';
-                    }, 1500);
-                    return;
-                }
-                
-                const user = session.user;
-                if (!user) {
-                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableCitygridButton, 'Enable Service', 'Enabling...');
-                    return;
-                }
-
-                if (enableCitygridButton.textContent === 'Enable Service') {
-                    const confirmTOS = confirm("By enabling this service, you agree to the Citygrid Terms of Service (Note to self: Remember to put an actual link here)"); // Added TOS for Citygrid
-                    if (!confirmTOS) {
-                        return; // Stop if user cancels
-                    }
-
-                    console.log('Enable Service button clicked for Citygrid.');
-                    setButtonLoading(true, enableCitygridButton, 'Enable Service', 'Enabling...');
-
-                    try {
-                        const newCode = generateCitygridLinkCode();
-                        console.log('Generated Citygrid Link Code:', newCode);
-
-                        const { data, error } = await supabaseClient
-                            .from('citygrid_data')
-                            .insert([
-                                { CitygridLinkCode: newCode, user_id: user.id }
-                            ]);
-
-                        if (error) {
-                            console.error('Error inserting Citygrid Link Code:', error);
-                            if (error.code === '23505') {
-                                // showMessage('Citygrid service already enabled or code conflict.', 'error', messageAreaServices);
-                            } else {
-                                // showMessage(`Failed to enable Citygrid service: ${error.message}`, 'error', messageAreaServices);
-                            }
-                        } else {
-                            console.log('Citygrid Link Code inserted successfully:', data);
-                            // showMessage('Citygrid service enabled successfully!', 'success', messageAreaServices);
-                            currentCitygridLinkCode = newCode;
-                            citygridLinkCodeSpan.textContent = currentCitygridLinkCode;
-                            setCitygridButtonState('enabled');
-                        }
-                    } catch (err) {
-                        console.error('Unexpected error during Citygrid service enablement:', err);
-                        // showMessage('An unexpected error occurred while enabling Citygrid service.', 'error', messageAreaServices);
-                    } finally {
-                        setButtonLoading(false, enableCitygridButton, 'Enable Service', 'Enabling...');
-                    }
-
-                } else if (enableCitygridButton.textContent === 'Disable Service') {
-                    const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
-                    
-                    if (!confirmDeactivation) {
-                        return;
-                    }
-
-                    console.log('Disable Citygrid Service button clicked.');
-                    setButtonLoading(true, enableCitygridButton, 'Disable Service', 'Disabling...');
-
-                    try {
-                        const { error } = await supabaseClient
-                            .from('citygrid_data')
-                            .delete()
-                            .eq('user_id', user.id)
-                            .eq('CitygridLinkCode', currentCitygridLinkCode);
-
-                        if (error) {
-                            console.error('Error disabling Citygrid service:', error);
-                            // showMessage(`Failed to disable Citygrid service: ${error.message}`, 'error', messageAreaServices);
-                        } else {
-                            console.log('Citygrid Service disabled successfully.');
-                            // showMessage('Citygrid service disabled successfully!', 'success', messageAreaServices);
-                            currentCitygridLinkCode = null;
-                            setCitygridButtonState('disabled');
-                        }
-                    } catch (err) {
-                        console.error('Unexpected error during Citygrid service disablement:', err);
-                        // showMessage('An unexpected error occurred while disabling Citygrid service.', 'error', messageAreaServices);
-                    } finally {
-                        setButtonLoading(false, enableCitygridButton, 'Disable Service', 'Disabling...');
-                    }
-                }
-                await checkCitygridServiceStatus(user.id);
-            });
-
-            // Show/Hide Citygrid Code
-            toggleCitygridCodeVisibilityButton.addEventListener('click', () => {
-                if (isCitygridCodeVisible) {
-                    citygridLinkCodeSpan.classList.add('blur-sm');
-                    citygridLinkCodeSpan.classList.remove('no-blur');
-                    toggleCitygridCodeVisibilityButton.textContent = 'Show Code';
-                } else {
-                    citygridLinkCodeSpan.classList.remove('blur-sm');
-                    citygridLinkCodeSpan.classList.add('no-blur');
-                    toggleCitygridCodeVisibilityButton.textContent = 'Hide Code';
-                }
-                isCitygridCodeVisible = !isCitygridCodeVisible;
-            });
-
-            // Copy Citygrid Code
-            copyCitygridCodeButton.addEventListener('click', async () => {
-                if (currentCitygridLinkCode) {
-                    try {
-                        const tempInput = document.createElement('textarea');
-                        tempInput.value = currentCitygridLinkCode;
-                        document.body.appendChild(tempInput);
-                        tempInput.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(tempInput);
-                        // showMessage('Citygrid link code copied to clipboard!', 'success', messageAreaServices);
-                    } catch (err) {
-                        console.error('Failed to copy Citygrid text:', err);
-                        // showMessage('Failed to copy Citygrid code. Please copy manually.', 'error', messageAreaServices);
-                    }
-                } else {
-                    // showMessage('No Citygrid link code to copy.', 'info', messageAreaServices);
-                }
-            });
-            // --- End New Citygrid Functionality ---
-
-
             // --- TBP Show/Hide and Copy Functionality ---
             toggleCodeVisibilityButton.addEventListener('click', () => {
                 if (isTBPCodeVisible) {
@@ -714,7 +472,7 @@
             });
 
             // Initial session check
-            checkSessionAndDisplayUser(); // This now also triggers the TBP and Citygrid service status check
+            checkSessionAndDisplayUser(); // This now also triggers the TBP service status check
 
             // Listen for auth state changes (e.g., if session expires or user logs out elsewhere)
             supabaseClient.auth.onAuthStateChange((event, session) => {

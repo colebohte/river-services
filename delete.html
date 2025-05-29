@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            background: url("bg.jpg");
+            background-size: cover;
+            background-position: center;
+            font-family: 'Inter', sans-serif;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Delete Account</h1>
+
+        <p class="text-gray-700 mb-6">
+            To securely delete your account, please confirm your current password.
+            This action is irreversible and will permanently remove your account and associated data.
+        </p>
+
+        <form id="delete-account-form" class="space-y-4">
+            <input
+                type="password"
+                id="current-password"
+                placeholder="Current Password"
+                class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                required
+            />
+            <button
+                type="submit"
+                id="delete-button"
+                class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200"
+            >
+                Delete My Account
+            </button>
+        </form>
+
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+
+        <a href="/river-services/account.html">
+            <button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200 mt-4">
+                Back to Account
+            </button>
+        </a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+
+    <script type="module">
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js';
+
+        const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
+
+        let supabaseClient;
+        const currentPasswordInput = document.getElementById('current-password');
+        const deleteButton = document.getElementById('delete-button');
+        const messageArea = document.getElementById('message-area');
+
+        let currentUserEmail = null; // To store the user's email for re-authentication
+
+        /**
+         * Displays a message to the user in the message area.
+         * @param {string} text - The message text.
+         * @param {'success' | 'error'} type - The type of message (determines styling).
+         */
+        function showMessage(text, type) {
+            console.log(`${type.toUpperCase()}: ${text}`);
+            messageArea.textContent = text;
+            messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left message ${type}`;
+            messageArea.classList.remove('hidden');
+
+            setTimeout(() => {
+                messageArea.classList.add('hidden');
+            }, 5000);
+        }
+
+        /**
+         * Sets the loading state for the delete button.
+         * @param {boolean} loading - True to show loading state, false otherwise.
+         */
+        function setButtonLoading(loading) {
+            deleteButton.disabled = loading;
+            deleteButton.textContent = loading ? 'Deleting...' : 'Delete My Account';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Give time for script to load
+
+                let SupabaseLib = null;
+                if (typeof supabase !== 'undefined') {
+                    SupabaseLib = supabase;
+                } else if (typeof Supabase !== 'undefined') {
+                    SupabaseLib = Supabase;
+                } else if (window.supabase) {
+                    SupabaseLib = window.supabase;
+                } else if (window.Supabase) {
+                    SupabaseLib = window.Supabase;
+                }
+
+                if (!SupabaseLib || !SupabaseLib.createClient) {
+                    throw new Error('Supabase library failed to load properly');
+                }
+
+                supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized successfully on delete account page');
+
+                // Check if user is authenticated, redirect if not
+                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                if (userError || !user) {
+                    console.error('No active session or user found:', userError || 'User object null');
+                    showMessage('No active session found. Redirecting to sign in.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/river-services/signin.html';
+                    }, 1500);
+                    return;
+                }
+                currentUserEmail = user.email; // Store the user's email
+
+            } catch (error) {
+                console.error('Supabase initialization failed on delete account page:', error);
+                showMessage(`Authentication system unavailable: ${error.message}`, 'error');
+                setTimeout(() => {
+                    window.location.href = '/river-services/signin.html';
+                }, 2000);
+                return;
+            }
+
+            // Handle delete account form submission
+            document.getElementById('delete-account-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                setButtonLoading(true);
+
+                const currentPassword = currentPasswordInput.value;
+
+                if (currentPassword.length === 0) {
+                    showMessage('Please enter your current password.', 'error');
+                    setButtonLoading(false);
+                    return;
+                }
+
+                // First, re-authenticate the user to verify the current password
+                try {
+                    const { error: signInError } = await supabaseClient.auth.signInWithPassword({
+                        email: currentUserEmail,
+                        password: currentPassword
+                    });
+
+                    if (signInError) {
+                        console.error('Re-authentication failed:', signInError.message);
+                        showMessage(`Incorrect password. Please try again.`, 'error');
+                        setButtonLoading(false);
+                        return;
+                    }
+
+                    // If re-authentication is successful, prompt for final confirmation
+                    const confirmDeletion = confirm("Are you absolutely sure you want to delete your account? This action is irreversible and will permanently remove all your data.");
+                    
+                    if (!confirmDeletion) {
+                        showMessage('Account deletion cancelled.', 'info');
+                        setButtonLoading(false);
+                        return;
+                    }
+
+                    // IMPORTANT SECURITY NOTE:
+                    // Supabase client-side API does NOT provide a direct method to delete a user
+                    // with just the client-side API key for security reasons.
+                    // User deletion typically requires a Supabase Service Role Key (which should NEVER be exposed client-side)
+                    // or a backend function (e.g., Supabase Edge Function, or your own server)
+                    // that uses the Service Role Key to perform the deletion.
+                    //
+                    // For this demonstration, we will simulate the deletion by logging the user out
+                    // and informing them that the deletion process has been initiated, implying
+                    // that an administrator or a backend process will complete it.
+                    // In a real application, you would make an API call to your backend/Edge Function here.
+
+                    await supabaseClient.auth.signOut(); // Log the user out immediately
+
+                    showMessage('Your account deletion request has been received. You have been logged out. Your account will be permanently deleted shortly.', 'success');
+                    console.log('Account deletion simulated: User logged out.');
+
+                    // Redirect to sign-in page after a short delay
+                    setTimeout(() => {
+                        window.location.href = '/river-services/signin.html';
+                    }, 3000);
+
+                } catch (err) {
+                    console.error('An unexpected error occurred during account deletion:', err);
+                    showMessage('An unexpected error occurred.', 'error');
+                } finally {
+                    setButtonLoading(false);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -90,6 +90,8 @@
             const logoutButton = document.getElementById('logout-button');
             const enableTBPButton = document.getElementById('enable-tbp-button'); // Get the new button
 
+            let currentTBPLinkCode = null; // Variable to store the TBP Link Code if service is enabled
+
             /**
              * Displays a message to the user in a specified message area.
              * @param {string} text - The message text.
@@ -157,6 +159,19 @@
                 return; // Stop further execution
             }
 
+            // Function to set the visual state of the TBP button
+            function setTBPButtonState(state) {
+                if (state === 'enabled') {
+                    enableTBPButton.textContent = 'Disable Service';
+                    enableTBPButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    enableTBPButton.classList.add('bg-red-500', 'hover:bg-red-600');
+                } else { // state === 'disabled'
+                    enableTBPButton.textContent = 'Enable Service';
+                    enableTBPButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    enableTBPButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                }
+            }
+
             // Function to check session and update UI
             async function checkSessionAndDisplayUser() {
                 console.log('Checking session on account page...');
@@ -170,12 +185,48 @@
                     }, 1500);
                 } else {
                     console.log('User session active. User:', user);
-                    // Display the display_name from user_metadata
-                    userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email; // Fallback to email if display_name isn't set
+                    userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email;
                     userIdSpan.textContent = user.id;
-                    userEmailSpan.textContent = user.email; // Set the email here
+                    userEmailSpan.textContent = user.email;
+
+                    // Now, check TBP service status for this user
+                    await checkTBPServiceStatus(user.id);
                 }
             }
+
+            /**
+             * Checks if the Tank Ball Physics service is enabled for the given user.
+             * Updates the button state and stores the TBPLinkCode if found.
+             * @param {string} userId - The UUID of the current user.
+             */
+            async function checkTBPServiceStatus(userId) {
+                console.log('Checking Tank Ball Physics service status...');
+                const { data: tbpService, error } = await supabaseClient
+                    .from('tbp_data')
+                    .select('TBPLinkCode')
+                    .eq('user_id', userId)
+                    .single(); // Use single() as we expect at most one entry per user
+
+                if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
+                    console.error('Error fetching TBP service status:', error);
+                    showMessage(`Error checking TBP status: ${error.message}`, 'error', messageAreaServices);
+                    setTBPButtonState('disabled'); // Default to disabled on error
+                    return;
+                }
+
+                if (tbpService) {
+                    // Service is enabled
+                    currentTBPLinkCode = tbpService.TBPLinkCode;
+                    setTBPButtonState('enabled');
+                    showMessage(`Tank Ball Physics service is enabled. Your code: ${currentTBPLinkCode}`, 'success', messageAreaServices);
+                } else {
+                    // Service is not enabled
+                    currentTBPLinkCode = null;
+                    setTBPButtonState('disabled');
+                    showMessage('Tank Ball Physics service is currently disabled.', 'info', messageAreaServices); // Using 'info' here for a neutral message
+                }
+            }
+
 
             // --- New Functionality for Tank Ball Physics Service ---
 
@@ -212,57 +263,82 @@
                 return `${part1}-${part2}-${part3}`;
             }
 
-            // Handle "Enable Service" button click
+            // Handle "Enable/Disable Service" button click
             enableTBPButton.addEventListener('click', async () => {
-                console.log('Enable Service button clicked for Tank Ball Physics.');
-                setButtonLoading(true, enableTBPButton, 'Enable Service', 'Enabling...');
+                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-                // No need to fetch user explicitly if RLS is configured to use auth.uid()
-                // The RLS policy will ensure the user_id is set based on the authenticated session.
-                // We just need to ensure there IS an active session.
-                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-
-                if (sessionError || !session) {
-                    showMessage('You must be logged in to enable services. Redirecting to sign in.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
+                if (userError || !user) {
+                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
                     setTimeout(() => {
                         window.location.href = '/river-services/signin.html';
                     }, 1500);
                     return;
                 }
 
-                try {
-                    const newCode = generateTBPLinkCode();
-                    console.log('Generated TBP Link Code:', newCode);
+                // Determine if we are enabling or disabling based on current button text
+                if (enableTBPButton.textContent === 'Enable Service') {
+                    console.log('Enable Service button clicked for Tank Ball Physics.');
+                    setButtonLoading(true, enableTBPButton, 'Enable Service', 'Enabling...');
 
-                    // Insert the new code into the 'tbp_data' table
-                    // Removed user_id as per your request, relying on RLS to set it
-                    const { data, error } = await supabaseClient
-                        .from('tbp_data')
-                        .insert([
-                            { TBPLinkCode: newCode }
-                        ]);
+                    try {
+                        const newCode = generateTBPLinkCode();
+                        console.log('Generated TBP Link Code:', newCode);
 
-                    if (error) {
-                        console.error('Error inserting TBP Link Code:', error);
-                        if (error.code === '23505') { // PostgreSQL unique violation error code
-                            showMessage('Service already enabled or code conflict. Please try again or contact support.', 'error', messageAreaServices);
+                        // Insert the new code into the 'tbp_data' table, including the user_id
+                        const { data, error } = await supabaseClient
+                            .from('tbp_data')
+                            .insert([
+                                { TBPLinkCode: newCode, user_id: user.id }
+                            ]);
+
+                        if (error) {
+                            console.error('Error inserting TBP Link Code:', error);
+                            if (error.code === '23505') { // PostgreSQL unique violation error code
+                                showMessage('Service already enabled or code conflict. Please try again or contact support.', 'error', messageAreaServices);
+                            } else {
+                                showMessage(`Failed to enable service: ${error.message}`, 'error', messageAreaServices);
+                            }
                         } else {
-                            showMessage(`Failed to enable service: ${error.message}`, 'error', messageAreaServices);
+                            console.log('TBP Link Code inserted successfully:', data);
+                            showMessage(`Service enabled! Your code: ${newCode}`, 'success', messageAreaServices);
+                            currentTBPLinkCode = newCode; // Store the new code
+                            setTBPButtonState('enabled'); // Update button to 'Disable'
                         }
-                    } else {
-                        console.log('TBP Link Code inserted successfully:', data);
-                        showMessage(`Service enabled! Your code: ${newCode}`, 'success', messageAreaServices);
-                        // Optionally, you might want to redirect to tbp.html or update UI further
-                        // setTimeout(() => {
-                        //     window.location.href = 'tbp.html';
-                        // }, 2000);
+                    } catch (err) {
+                        console.error('Unexpected error during TBP service enablement:', err);
+                        showMessage('An unexpected error occurred while enabling service.', 'error', messageAreaServices);
+                    } finally {
+                        setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
                     }
-                } catch (err) {
-                    console.error('Unexpected error during TBP service enablement:', err);
-                    showMessage('An unexpected error occurred while enabling service.', 'error', messageAreaServices);
-                } finally {
-                    setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
+
+                } else if (enableTBPButton.textContent === 'Disable Service') {
+                    console.log('Disable Service button clicked.');
+                    setButtonLoading(true, enableTBPButton, 'Disable Service', 'Disabling...');
+
+                    try {
+                        // Delete the row based on user_id and the stored TBPLinkCode
+                        // Deleting by user_id AND TBPLinkCode provides robust security and specificity
+                        const { error } = await supabaseClient
+                            .from('tbp_data')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('TBPLinkCode', currentTBPLinkCode); // Use the stored code for deletion
+
+                        if (error) {
+                            console.error('Error disabling TBP service:', error);
+                            showMessage(`Failed to disable service: ${error.message}`, 'error', messageAreaServices);
+                        } else {
+                            console.log('TBP Service disabled successfully.');
+                            showMessage('Service disabled successfully!', 'success', messageAreaServices);
+                            currentTBPLinkCode = null; // Clear the stored code
+                            setTBPButtonState('disabled'); // Change button back to "Enable"
+                        }
+                    } catch (err) {
+                        console.error('Unexpected error during TBP service disablement:', err);
+                        showMessage('An unexpected error occurred while disabling service.', 'error', messageAreaServices);
+                    } finally {
+                        setButtonLoading(false, enableTBPButton, 'Disable Service', 'Disabling...');
+                    }
                 }
             });
 
@@ -288,7 +364,7 @@
             });
 
             // Initial session check
-            checkSessionAndDisplayUser();
+            checkSessionAndDisplayUser(); // This now also triggers the TBP service status check
 
             // Listen for auth state changes (e.g., if session expires or user logs out elsewhere)
             supabaseClient.auth.onAuthStateChange((event, session) => {
@@ -299,6 +375,9 @@
                     setTimeout(() => {
                         window.location.href = '/river-services/signin.html';
                     }, 1500);
+                } else if (event === 'SIGNED_IN') {
+                    // If user signs in, re-check everything
+                    checkSessionAndDisplayUser();
                 }
             });
         });

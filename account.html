@@ -293,30 +293,30 @@
             // --- New Functionality for Tank Ball Physics Service ---
 
             /**
-             * Generates a unique code with the structure "XXNNN-XXXNN-NXNNN".
-             * X = uppercase letter, N = digit (0-9).
+             * Generates a unique code with the structure "xxnnn-xxxnn-nxnnn".
+             * x = lowercase letter, n = digit (0-9).
              * @returns {string} The generated code.
              */
             function generateTBPLinkCode() {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                const chars = 'abcdefghijklmnopqrstuvwxyz'; // Changed to lowercase
                 const digits = '0123456789';
 
                 const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
                 const getRandomDigit = () => digits.charAt(Math.floor(Math.random() * digits.length));
 
-                // Part 1: XXNNN
+                // Part 1: xxnnn
                 let part1 = getRandomChar() + getRandomChar();
                 for (let i = 0; i < 3; i++) {
                     part1 += getRandomDigit();
                 }
 
-                // Part 2: XXXNN
+                // Part 2: xxxnn
                 let part2 = getRandomChar() + getRandomChar() + getRandomChar();
                 for (let i = 0; i < 2; i++) {
                     part2 += getRandomDigit();
                 }
 
-                // Part 3: NXNNN
+                // Part 3: nxnnn
                 let part3 = getRandomDigit() + getRandomChar();
                 for (let i = 0; i < 3; i++) {
                     part3 += getRandomDigit();

@@ -233,6 +233,7 @@
             /**
              * Checks if the Tank Ball Physics service is enabled for the given user.
              * Updates the button state and stores the TBPLinkCode if found.
+             * Also updates the username in tbp_data if it has changed.
              * @param {string} userId - The UUID of the current user.
              */
             async function checkTBPServiceStatus(userId) {
@@ -246,7 +247,7 @@
 
                 const { data: tbpService, error } = await supabaseClient
                     .from('tbp_data')
-                    .select('TBPLinkCode')
+                    .select('TBPLinkCode, username') // Select username as well
                     .eq('user_id', userId) // Using userId parameter here
                     .single(); // Use single() as we expect at most one entry per user
 
@@ -261,6 +262,27 @@
                     currentTBPLinkCode = tbpService.TBPLinkCode;
                     tbpLinkCodeSpan.textContent = currentTBPLinkCode; // Display the code
                     setTBPButtonState('enabled');
+
+                    // Check if the stored username needs to be updated
+                    const { data: { user } } = await supabaseClient.auth.getUser(); // Get current user data again
+                    const currentDisplayName = user.user_metadata.display_name || user.email;
+
+                    if (tbpService.username !== currentDisplayName) {
+                        console.log('TBP username out of sync. Updating...');
+                        const { error: updateError } = await supabaseClient
+                            .from('tbp_data')
+                            .update({ username: currentDisplayName })
+                            .eq('user_id', userId);
+
+                        if (updateError) {
+                            console.error('Error updating TBP username:', updateError.message);
+                            // showMessage(`Failed to update TBP username: ${updateError.message}`, 'error', messageAreaServices);
+                        } else {
+                            console.log('TBP username updated successfully.');
+                            // showMessage('TBP username updated.', 'info', messageAreaServices);
+                        }
+                    }
+
                 } else {
                     // Service is not enabled
                     currentTBPLinkCode = null;

@@ -105,7 +105,7 @@
             'The email verification link has expired. Please try signing in again to receive a new link.',
             false,
             'Sign In',
-            '/river-services/' // Link back to your main sign-in page
+            '' // Link back to your main sign-in page
         );
     } else {
         // Listen for authentication state changes
@@ -117,7 +117,7 @@
                 'Your email has been successfully verified.',
                 true,
                 'Sign In',
-                '/river-services/'
+                ''
             );
           } else {
             // This handles cases where the session might not be immediately available or verification fails
@@ -126,7 +126,7 @@
                 'Please try signing in again, or check your email for the correct link.',
                 false,
                 'Sign In',
-                '/river-services/'
+                ''
             );
           }
         });
@@ -143,7 +143,7 @@
                       'Error retrieving session. Please try signing in again.',
                       false,
                       'Sign In',
-                      '/river-services/'
+                      ''
                   );
               } else if (session) {
                   console.log('Session found on verify page:', session);
@@ -152,7 +152,7 @@
                       'Your email has been successfully verified.',
                       true,
                       'Sign In',
-                      '/river-services/'
+                      ''
                   );
               } else {
                   console.log('No session found on verify page after immediate check.');
@@ -162,7 +162,7 @@
                       'No active session found. The link might be invalid or expired. Please try signing in again.',
                       false,
                       'Sign In',
-                      '/river-services/'
+                      ''
                   );
               }
           } catch (err) {
@@ -172,7 +172,7 @@
                   'An unexpected error occurred. Please try signing in again.',
                   false,
                   'Sign In',
-                  '/river-services/'
+                  ''
               );
           }
         })();

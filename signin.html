@@ -55,11 +55,11 @@
         </form>
 
         <p class="text-sm text-gray-600 mt-4">
-            <a href="/river-services/forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
+            <a href="forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
         </p>
         <p class="text-sm text-gray-600 mt-4">
             Don't have an account?
-            <a href="/river-services/signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
+            <a href="signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
         </p>
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
@@ -185,7 +185,7 @@
                         // Redirect after delay
                         setTimeout(() => {
                             console.log('Redirecting to account page...');
-                            window.location.href = '/river-services/account.html';
+                            window.location.href = 'account.html';
                         }, 1500);
                     } else {
                         // This case should ideally not be reached if there's no error but no user
@@ -229,7 +229,7 @@
                         console.log('Valid user account found on backend with active session, redirecting to account page.');
                         showMessage('Already signed in! Redirecting...', 'success');
                         setTimeout(() => {
-                            window.location.href = '/river-services/account.html';
+                            window.location.href = 'account.html';
                         }, 1000);
                     } else {
                         console.log('No existing session found. Displaying sign-in form.');

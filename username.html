@@ -75,7 +75,7 @@
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
 
-        <a href="/river-services/account.html">
+        <a href="account.html">
             <button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200 mt-4">
                 Back to Account
             </button>
@@ -148,7 +148,7 @@
                 console.error('Supabase initialization failed on username page:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error');
                 setTimeout(() => {
-                    window.location.href = '/river-services/signin.html';
+                    window.location.href = 'signin.html';
                 }, 2000);
                 return;
             }
@@ -161,7 +161,7 @@
                     console.error('No active session or user found:', userError || 'User object null');
                     showMessage('No active session found. Redirecting to sign in.', 'error');
                     setTimeout(() => {
-                        window.location.href = '/river-services/signin.html';
+                        window.location.href = 'signin.html';
                     }, 1500);
                 } else {
                     console.log('User session active. User:', user);

@@ -74,7 +74,7 @@
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
 
-        <a href="account.html">
+        <a href="account">
             <button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200 mt-4">
                 Back to Account
             </button>
@@ -149,7 +149,7 @@
                     console.error('No active session or user found:', userError || 'User object null');
                     showMessage('No active session found. Redirecting to sign in.', 'error');
                     setTimeout(() => {
-                        window.location.href = 'signin.html';
+                        window.location.href = 'signin';
                     }, 1500);
                     return;
                 }
@@ -159,7 +159,7 @@
                 console.error('Supabase initialization failed on delete account page:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error');
                 setTimeout(() => {
-                    window.location.href = 'signin.html';
+                    window.location.href = 'signin';
                 }, 2000);
                 return;
             }
@@ -219,7 +219,7 @@
 
                     // Redirect to sign-in page after a short delay
                     setTimeout(() => {
-                        window.location.href = 'signin.html';
+                        window.location.href = 'signin';
                     }, 3000);
 
                 } catch (err) {

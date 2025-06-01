@@ -181,7 +181,7 @@
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error', messageArea);
                 // Redirect to signin if auth system is unavailable
                 setTimeout(() => {
-                    window.location.href = '/river-services/signin.html';
+                    window.location.href = 'signin.html';
                 }, 2000);
                 return; // Stop further execution
             }
@@ -217,7 +217,7 @@
                     console.error('No active session or user found:', userError || 'User object null');
                     showMessage('No active session found. Redirecting to sign in.', 'error', messageArea);
                     setTimeout(() => {
-                        window.location.href = '/river-services/signin.html';
+                        window.location.href = 'signin.html';
                     }, 1500);
                 } else {
                     console.log('User session active. User:', user);
@@ -335,7 +335,7 @@
                     showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
                     setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
                     setTimeout(() => {
-                        window.location.href = '/river-services/signin.html';
+                        window.location.href = 'signin.html';
                     }, 1500);
                     return;
                 }
@@ -487,7 +487,7 @@
                     console.log('Successfully logged out. Redirecting to signin page.');
                     showMessage('Logged out successfully! Redirecting...', 'success', messageArea);
                     setTimeout(() => {
-                        window.location.href = '/river-services/signin.html';
+                        window.location.href = 'signin.html';
                     }, 1500);
                 }
                 setButtonLoading(false, logoutButton, 'Logout', 'Logging Out...');
@@ -503,7 +503,7 @@
                     console.log('User signed out or session expired. Redirecting to signin page.');
                     showMessage('Your session has ended. Redirecting to sign in.', 'error', messageArea);
                     setTimeout(() => {
-                        window.location.href = '/river-services/signin.html';
+                        window.location.href = 'signin.html';
                     }, 1500);
                 } else if (event === 'SIGNED_IN') {
                     // If user signs in, re-check everything

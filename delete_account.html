@@ -201,7 +201,7 @@
                     }
 
                     // Call edge function to delete account "gdpr"
-                    await supabaseClient.functions.invoke('user-self-deletion')
+                    await supabaseClient.functions.invoke('gdpr')
 
                     // Sign out the user after successful account deletion
                     await supabaseClient.auth.signOut(); // This might work...

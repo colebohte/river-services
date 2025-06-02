@@ -200,22 +200,11 @@
                         return;
                     }
 
-                    // IMPORTANT SECURITY NOTE:
-                    // Supabase client-side API does NOT provide a direct method to delete a user
-                    // with just the client-side API key for security reasons.
-                    // User deletion typically requires a Supabase Service Role Key (which should NEVER be exposed client-side)
-                    // or a backend function (e.g., Supabase Edge Function, or your own server)
-                    // that uses the Service Role Key to perform the deletion.
-                    //
-                    // For this demonstration, we will simulate the deletion by logging the user out
-                    // and informing them that the deletion process has been initiated, implying
-                    // that an administrator or a backend process will complete it.
-                    // In a real application, you would make an API call to your backend/Edge Function here.
+                    // Call edge function to delete account "gdpr"
+                    await supabaseClient.functions.invoke('user-self-deletion')
 
-                    await supabaseClient.auth.signOut(); // Log the user out immediately
-
-                    showMessage('Your account deletion request has been received. You have been logged out. Your account will be permanently deleted shortly.', 'success');
-                    console.log('Account deletion simulated: User logged out.');
+                    // Sign out the user after successful account deletion
+                    await supabaseClient.auth.signOut(); // This might work...
 
                     // Redirect to sign-in page after a short delay
                     setTimeout(() => {

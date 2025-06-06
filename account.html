@@ -85,6 +85,16 @@
         </p>
         <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
 
+        <!-- New STBG Service Section -->
+        <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Survival the Ball Game</h3>
+        <p id="stbg-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
+            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="stbg-code-span"></span><br> 
+            <button id="toggle-stbg-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+            <button id="copy-stbg-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
+        </p>
+        <button id="enable-stbg-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
+        <!-- End New STBG Service Section -->
+
         <div id="message-area-services" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
 
@@ -113,8 +123,19 @@
             const toggleCodeVisibilityButton = document.getElementById('toggle-code-visibility');
             const copyCodeButton = document.getElementById('copy-code-button');
 
+            // STBG Elements
+            const enableSTBGButton = document.getElementById('enable-stbg-button');
+            const stbgLinkDisplay = document.getElementById('stbg-link-display');
+            const stbgLinkCodeSpan = document.getElementById('stbg-code-span');
+            const toggleSTBGCodeVisibilityButton = document.getElementById('toggle-stbg-code-visibility');
+            const copySTBGCodeButton = document.getElementById('copy-stbg-code-button');
+
             let currentTBPLinkCode = null; // Variable to store the TBP Link Code if service is enabled
             let isTBPCodeVisible = false; // Track the visibility state of the TBP code
+
+            let currentSTBGLinkCode = null; // Variable to store the STBG Link Code if service is enabled
+            let isSTBGCodeVisible = false; // Track the visibility state of the STBG code
+
 
             /**
              * Displays a message to the user in a specified message area.
@@ -209,6 +230,29 @@
                 }
             }
 
+            // Function to set the visual state of the STBG button and link display
+            function setSTBGButtonState(state) {
+                if (state === 'enabled') {
+                    enableSTBGButton.textContent = 'Disable Service';
+                    enableSTBGButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    enableSTBGButton.classList.add('bg-red-500', 'hover:bg-red-600');
+                    stbgLinkDisplay.classList.remove('hidden'); // Show the link display container
+                    // Ensure code is blurred by default when enabled
+                    stbgLinkCodeSpan.classList.add('blur-sm');
+                    stbgLinkCodeSpan.classList.remove('no-blur');
+                    toggleSTBGCodeVisibilityButton.textContent = 'Show Code';
+                    isSTBGCodeVisible = false;
+                } else { // state === 'disabled'
+                    enableSTBGButton.textContent = 'Enable Service';
+                    enableSTBGButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    enableSTBGButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    stbgLinkDisplay.classList.add('hidden'); // Hide the link display container
+                    stbgLinkCodeSpan.textContent = ''; // Clear the code
+                    currentSTBGLinkCode = null; // Clear stored code
+                }
+            }
+
+
             // Function to check session and update UI
             async function checkSessionAndDisplayUser() {
                 console.log('Checking session on account page...');
@@ -228,6 +272,8 @@
 
                     // Now, check TBP service status for this user
                     await checkTBPServiceStatus(user.id);
+                    // And check STBG service status for this user
+                    await checkSTBGServiceStatus(user.id);
                 }
             }
 
@@ -291,6 +337,59 @@
                 }
             }
 
+            /**
+             * Checks if the STBG service is enabled for the given user.
+             * Updates the button state and stores the LinkCode if found.
+             * Also updates the username in stbg_data if it has changed.
+             * @param {string} userId - The UUID of the current user.
+             */
+            async function checkSTBGServiceStatus(userId) {
+                console.log('Checking STBG service status...');
+                if (!userId) {
+                    console.warn('User ID not available for checking STBG service status.');
+                    setSTBGButtonState('disabled');
+                    return;
+                }
+
+                const { data: stbgService, error } = await supabaseClient
+                    .from('stbg_data')
+                    .select('LinkCode, username') // Select LinkCode and username
+                    .eq('user_id', userId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Error fetching STBG service status:', error);
+                    setSTBGButtonState('disabled');
+                    return;
+                }
+
+                if (stbgService) {
+                    currentSTBGLinkCode = stbgService.LinkCode;
+                    stbgLinkCodeSpan.textContent = currentSTBGLinkCode;
+                    setSTBGButtonState('enabled');
+
+                    const { data: { user } } = await supabaseClient.auth.getUser();
+                    const currentDisplayName = user.user_metadata.display_name || user.email;
+
+                    if (stbgService.username !== currentDisplayName) {
+                        console.log('STBG username out of sync. Updating...');
+                        const { error: updateError } = await supabaseClient
+                            .from('stbg_data')
+                            .update({ username: currentDisplayName })
+                            .eq('user_id', userId);
+
+                        if (updateError) {
+                            console.error('Error updating STBG username:', updateError.message);
+                        } else {
+                            console.log('STBG username updated successfully.');
+                        }
+                    }
+                } else {
+                    currentSTBGLinkCode = null;
+                    setSTBGButtonState('disabled');
+                }
+            }
+
             // --- New Functionality for Tank Ball Physics Service ---
 
             /**
@@ -326,10 +425,8 @@
                 return `${part1}-${part2}-${part3}`;
             }
 
-            // Handle "Enable/Disable Service" button click
+            // Handle "Enable/Disable Service" button click for TBP
             enableTBPButton.addEventListener('click', async () => {
-                // We still need to get the user's session to ensure they are authenticated
-                // and for the RLS policy to work correctly based on auth.uid()
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
                 if (sessionError || !session) {
@@ -341,7 +438,6 @@
                     return;
                 }
                 
-                // Get the user object from the session for the user ID and display name
                 const user = session.user;
                 if (!user) {
                     showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
@@ -349,9 +445,7 @@
                     return;
                 }
 
-                // Determine if we are enabling or disabling based on current button text
                 if (enableTBPButton.textContent === 'Enable Service') {
-                    // Confirmation for TOS
                     const confirmTOS = confirm("By enabling this service, you agree to the Tank Ball Physics Terms of Service (colebohte.github.io/tbptos)");
                     if (!confirmTOS) {
                         return; // Stop if user cancels
@@ -364,9 +458,6 @@
                         const newCode = generateTBPLinkCode();
                         console.log('Generated TBP Link Code:', newCode);
 
-                        // Insert the new code into the 'tbp_data' table.
-                        // We explicitly send user_id and username here to satisfy RLS policy
-                        // and store the display name.
                         const { data, error } = await supabaseClient
                             .from('tbp_data')
                             .insert([
@@ -399,7 +490,6 @@
                     }
 
                 } else if (enableTBPButton.textContent === 'Disable Service') {
-                    // Confirmation dialog before disabling
                     const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
                     
                     if (!confirmDeactivation) {
@@ -410,7 +500,6 @@
                     setButtonLoading(true, enableTBPButton, 'Disable Service', 'Disabling...');
 
                     try {
-                        // Delete the row based on user_id (inferred by RLS) and the stored TBPLinkCode
                         const { error } = await supabaseClient
                             .from('tbp_data')
                             .delete()
@@ -433,11 +522,174 @@
                         setButtonLoading(false, enableTBPButton, 'Disable Service', 'Disabling...');
                     }
                 }
-                // After any action, re-check the status to ensure UI is consistent
                 await checkTBPServiceStatus(user.id);
             });
 
-            // --- End New Functionality ---
+            // --- End TBP Functionality ---
+
+            // --- New Functionality for STBG Service ---
+
+            /**
+             * Generates a unique code for STBG with the structure "xxnnn-xxxnn-nxnnn".
+             * x = lowercase letter, n = digit (0-9).
+             * @returns {string} The generated code.
+             */
+            function generateSTBGLinkCode() {
+                const chars = 'abcdefghijklmnopqrstuvwxyz';
+                const digits = '0123456789';
+
+                const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
+                const getRandomDigit = () => digits.charAt(Math.floor(Math.random() * digits.length));
+
+                let part1 = getRandomChar() + getRandomChar();
+                for (let i = 0; i < 3; i++) {
+                    part1 += getRandomDigit();
+                }
+
+                let part2 = getRandomChar() + getRandomChar() + getRandomChar();
+                for (let i = 0; i < 2; i++) {
+                    part2 += getRandomDigit();
+                }
+
+                let part3 = getRandomDigit() + getRandomChar();
+                for (let i = 0; i < 3; i++) {
+                    part3 += getRandomDigit();
+                }
+
+                return `${part1}-${part2}-${part3}`;
+            }
+
+            // Handle "Enable/Disable Service" button click for STBG
+            enableSTBGButton.addEventListener('click', async () => {
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+
+                if (sessionError || !session) {
+                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
+                    setButtonLoading(false, enableSTBGButton, 'Enable Service', 'Enabling...');
+                    setTimeout(() => {
+                        window.location.href = 'signin';
+                    }, 1500);
+                    return;
+                }
+                
+                const user = session.user;
+                if (!user) {
+                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
+                    setButtonLoading(false, enableSTBGButton, 'Enable Service', 'Enabling...');
+                    return;
+                }
+
+                if (enableSTBGButton.textContent === 'Enable Service') {
+                    const confirmTOS = confirm("By enabling this service, you agree to the STBG Terms of Service (colebohte.github.io/stbgtos)"); // Placeholder TOS
+                    if (!confirmTOS) {
+                        return; // Stop if user cancels
+                    }
+
+                    console.log('Enable Service button clicked for STBG.');
+                    setButtonLoading(true, enableSTBGButton, 'Enable Service', 'Enabling...');
+
+                    try {
+                        const newCode = generateSTBGLinkCode();
+                        console.log('Generated STBG Link Code:', newCode);
+
+                        const { data, error } = await supabaseClient
+                            .from('stbg_data')
+                            .insert([
+                                { 
+                                    LinkCode: newCode, // Use LinkCode as specified by user
+                                    user_id: user.id,
+                                    username: user.user_metadata.display_name || user.email
+                                } 
+                            ]);
+
+                        if (error) {
+                            console.error('Error inserting STBG Link Code:', error);
+                            if (error.code === '23505') {
+                                // showMessage('STBG service already enabled or code conflict.', 'error', messageAreaServices);
+                            } else {
+                                // showMessage(`Failed to enable STBG service: ${error.message}`, 'error', messageAreaServices);
+                            }
+                        } else {
+                            console.log('STBG Link Code inserted successfully:', data);
+                            // showMessage('STBG service enabled successfully!', 'success', messageAreaServices);
+                            currentSTBGLinkCode = newCode;
+                            stbgLinkCodeSpan.textContent = currentSTBGLinkCode;
+                            setSTBGButtonState('enabled');
+                        }
+                    } catch (err) {
+                        console.error('Unexpected error during STBG service enablement:', err);
+                        // showMessage('An unexpected error occurred while enabling STBG service.', 'error', messageAreaServices);
+                    } finally {
+                        setButtonLoading(false, enableSTBGButton, 'Enable Service', 'Enabling...');
+                    }
+
+                } else if (enableSTBGButton.textContent === 'Disable Service') {
+                    const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
+                    
+                    if (!confirmDeactivation) {
+                        return;
+                    }
+
+                    console.log('Disable STBG Service button clicked.');
+                    setButtonLoading(true, enableSTBGButton, 'Disable Service', 'Disabling...');
+
+                    try {
+                        const { error } = await supabaseClient
+                            .from('stbg_data')
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('LinkCode', currentSTBGLinkCode); // Use LinkCode for deletion
+
+                        if (error) {
+                            console.error('Error disabling STBG service:', error);
+                            // showMessage(`Failed to disable STBG service: ${error.message}`, 'error', messageAreaServices);
+                        } else {
+                            console.log('STBG Service disabled successfully.');
+                            // showMessage('STBG service disabled successfully!', 'success', messageAreaServices);
+                            currentSTBGLinkCode = null;
+                            setSTBGButtonState('disabled');
+                        }
+                    } catch (err) {
+                        console.error('Unexpected error during STBG service disablement:', err);
+                        // showMessage('An unexpected error occurred while disabling STBG service.', 'error', messageAreaServices);
+                    } finally {
+                        setButtonLoading(false, enableSTBGButton, 'Disable Service', 'Disabling...');
+                    }
+                }
+                await checkSTBGServiceStatus(user.id);
+            });
+
+            // STBG Show/Hide Code
+            toggleSTBGCodeVisibilityButton.addEventListener('click', () => {
+                if (isSTBGCodeVisible) {
+                    stbgLinkCodeSpan.classList.add('blur-sm');
+                    stbgLinkCodeSpan.classList.remove('no-blur');
+                    toggleSTBGCodeVisibilityButton.textContent = 'Show Code';
+                } else {
+                    stbgLinkCodeSpan.classList.remove('blur-sm');
+                    stbgLinkCodeSpan.classList.add('no-blur');
+                    toggleSTBGCodeVisibilityButton.textContent = 'Hide Code';
+                }
+                isSTBGCodeVisible = !isSTBGCodeVisible;
+            });
+
+            // Copy STBG Code
+            copySTBGCodeButton.addEventListener('click', async () => {
+                if (currentSTBGLinkCode) {
+                    try {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = currentSTBGLinkCode;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                    } catch (err) {
+                        console.error('Failed to copy STBG text:', err);
+                    }
+                }
+            });
+            // --- End STBG Functionality ---
+
 
             // --- TBP Show/Hide and Copy Functionality ---
             toggleCodeVisibilityButton.addEventListener('click', () => {
@@ -463,13 +715,9 @@
                         tempInput.select();
                         document.execCommand('copy');
                         document.body.removeChild(tempInput);
-                        // showMessage('Link code copied to clipboard!', 'success', messageAreaServices);
                     } catch (err) {
                         console.error('Failed to copy text:', err);
-                        // showMessage('Failed to copy code. Please copy manually.', 'error', messageAreaServices);
                     }
-                } else {
-                    // showMessage('No link code to copy.', 'info', messageAreaServices);
                 }
             });
             // --- End TBP Show/Hide and Copy Functionality ---
@@ -495,7 +743,7 @@
             });
 
             // Initial session check
-            checkSessionAndDisplayUser(); // This now also triggers the TBP service status check
+            checkSessionAndDisplayUser(); // This now also triggers the TBP and STBG service status check
 
             // Listen for auth state changes (e.g., if session expires or user logs out elsewhere)
             supabaseClient.auth.onAuthStateChange((event, session) => {

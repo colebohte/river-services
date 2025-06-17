@@ -68,7 +68,7 @@
         </p>
         <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
 
-        <!-- New STBG Service Section -->
+        <!-- STBG Service Section -->
         <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Survival the Ball Game</h3>
         <p id="stbg-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
             Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="stbg-code-span"></span><br> 
@@ -76,11 +76,21 @@
             <button id="copy-stbg-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
         </p>
         <button id="enable-stbg-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
-        <!-- End New STBG Service Section -->
+        <!-- End STBG Service Section -->
+
+        <!-- New DIAC Service Section -->
+        <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Die in a Cellar</h3>
+        <p id="diac-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
+            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="diac-code-span"></span><br> 
+            <button id="toggle-diac-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+            <button id="copy-diac-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
+        </p>
+        <button id="enable-diac-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
+        <!-- End New DIAC Service Section -->
 
         <div id="message-area-services" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
         
-        <a href="account"><button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200 mt-4">Back to Account</button></a>
+        <a href="account.html"><button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200 mt-4">Back to Account</button></a>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
@@ -107,11 +117,22 @@
             const toggleSTBGCodeVisibilityButton = document.getElementById('toggle-stbg-code-visibility');
             const copySTBGCodeButton = document.getElementById('copy-stbg-code-button');
 
+            // DIAC Elements
+            const enableDIACButton = document.getElementById('enable-diac-button');
+            const diacLinkDisplay = document.getElementById('diac-link-display');
+            const diacLinkCodeSpan = document.getElementById('diac-code-span');
+            const toggleDIACCodeVisibilityButton = document.getElementById('toggle-diac-code-visibility');
+            const copyDIACCodeButton = document.getElementById('copy-diac-code-button');
+
             let currentTBPLinkCode = null;
             let isTBPCodeVisible = false;
 
             let currentSTBGLinkCode = null;
             let isSTBGCodeVisible = false;
+
+            let currentDIACLinkCode = null; // Variable for DIAC link code
+            let isDIACCodeVisible = false; // Visibility for DIAC code
+
 
             /**
              * Displays a message to the user in a specified message area.
@@ -225,6 +246,27 @@
                 }
             }
 
+            // Function to set the visual state of the DIAC button and link display
+            function setDIACButtonState(state) {
+                if (state === 'enabled') {
+                    enableDIACButton.textContent = 'Disable Service';
+                    enableDIACButton.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+                    enableDIACButton.classList.add('bg-red-500', 'hover:bg-red-600');
+                    diacLinkDisplay.classList.remove('hidden');
+                    diacLinkCodeSpan.classList.add('blur-sm');
+                    diacLinkCodeSpan.classList.remove('no-blur');
+                    toggleDIACCodeVisibilityButton.textContent = 'Show Code';
+                    isDIACCodeVisible = false;
+                } else {
+                    enableDIACButton.textContent = 'Enable Service';
+                    enableDIACButton.classList.remove('bg-red-500', 'hover:bg-red-600');
+                    enableDIACButton.classList.add('bg-blue-500', 'hover:bg-blue-600');
+                    diacLinkDisplay.classList.add('hidden');
+                    diacLinkCodeSpan.textContent = '';
+                    currentDIACLinkCode = null;
+                }
+            }
+
             // Function to check session and update UI, specific for services.html
             async function checkSessionAndLoadServices() {
                 console.log('Checking session on services page...');
@@ -242,6 +284,8 @@
                     await checkTBPServiceStatus(user.id);
                     // And check STBG service status for this user
                     await checkSTBGServiceStatus(user.id);
+                    // And check DIAC service status for this user
+                    await checkDIACServiceStatus(user.id);
                 }
             }
 
@@ -352,6 +396,59 @@
             }
 
             /**
+             * Checks if the DIAC service is enabled for the given user.
+             * Updates the button state and stores the LinkCode if found.
+             * Also updates the username in diac_data if it has changed.
+             * @param {string} userId - The UUID of the current user.
+             */
+            async function checkDIACServiceStatus(userId) {
+                console.log('Checking DIAC service status...');
+                if (!userId) {
+                    console.warn('User ID not available for checking DIAC service status.');
+                    setDIACButtonState('disabled');
+                    return;
+                }
+
+                const { data: diacService, error } = await supabaseClient
+                    .from('diac_data') // Changed table name
+                    .select('LinkCode, username')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    console.error('Error fetching DIAC service status:', error);
+                    setDIACButtonState('disabled');
+                    return;
+                }
+
+                if (diacService) {
+                    currentDIACLinkCode = diacService.LinkCode;
+                    diacLinkCodeSpan.textContent = currentDIACLinkCode;
+                    setDIACButtonState('enabled');
+
+                    const { data: { user } } = await supabaseClient.auth.getUser();
+                    const currentDisplayName = user.user_metadata.display_name || user.email;
+
+                    if (diacService.username !== currentDisplayName) {
+                        console.log('DIAC username out of sync. Updating...');
+                        const { error: updateError } = await supabaseClient
+                            .from('diac_data') // Changed table name
+                            .update({ username: currentDisplayName })
+                            .eq('user_id', userId);
+
+                        if (updateError) {
+                            console.error('Error updating DIAC username:', updateError.message);
+                        } else {
+                            console.log('DIAC username updated successfully.');
+                        }
+                    }
+                } else {
+                    currentDIACLinkCode = null;
+                    setDIACButtonState('disabled');
+                }
+            }
+
+            /**
              * Generates a unique code with the structure "xxnnn-xxxnn-nxnnn".
              * x = lowercase letter, n = digit (0-9).
              * @returns {string} The generated code.
@@ -387,7 +484,7 @@
                 }
 
                 if (enableTBPButton.textContent === 'Enable Service') {
-                    const confirmTOS = confirm("By enabling this service, you agree to the Tank Ball Physics Terms of Service (terms.rivergames.ca/tank-ball-physics)");
+                    const confirmTOS = confirm("By enabling this service, you agree to the Tank Ball Physics Terms of Service (colebohte.github.io/tbptos)");
                     if (!confirmTOS) { return; }
                     console.log('Enable Service button clicked for Tank Ball Physics.');
                     setButtonLoading(true, enableTBPButton, 'Enable Service', 'Enabling...');
@@ -472,7 +569,7 @@
                 }
 
                 if (enableSTBGButton.textContent === 'Enable Service') {
-                    const confirmTOS = confirm("By enabling this service, you agree to the Survival the Ball Game Terms of Service (terms.rivergames.ca/survival-the-ball-game)");
+                    const confirmTOS = confirm("By enabling this service, you agree to the STBG Terms of Service (colebohte.github.io/stbgtos)");
                     if (!confirmTOS) { return; }
                     console.log('Enable Service button clicked for STBG.');
                     setButtonLoading(true, enableSTBGButton, 'Enable Service', 'Enabling...');
@@ -520,6 +617,92 @@
                 }
                 await checkSTBGServiceStatus(user.id);
             });
+
+            /**
+             * Generates a unique code for DIAC with the structure "xxnnn-xxxnn-nxnnn".
+             * x = lowercase letter, n = digit (0-9).
+             * @returns {string} The generated code.
+             */
+            function generateDIACLinkCode() {
+                const chars = 'abcdefghijklmnopqrstuvwxyz';
+                const digits = '0123456789';
+                const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
+                const getRandomDigit = () => digits.charAt(Math.floor(Math.random() * digits.length));
+                let part1 = getRandomChar() + getRandomChar();
+                for (let i = 0; i < 3; i++) { part1 += getRandomDigit(); }
+                let part2 = getRandomChar() + getRandomChar() + getRandomChar();
+                for (let i = 0; i < 2; i++) { part2 += getRandomDigit(); }
+                let part3 = getRandomDigit() + getRandomChar();
+                for (let i = 0; i < 3; i++) { part3 += getRandomDigit(); }
+                return `${part1}-${part2}-${part3}`;
+            }
+
+            // Handle "Enable/Disable Service" button click for DIAC
+            enableDIACButton.addEventListener('click', async () => {
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                if (sessionError || !session) {
+                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
+                    setButtonLoading(false, enableDIACButton, 'Enable Service', 'Enabling...');
+                    setTimeout(() => { window.location.href = 'signin'; }, 1500);
+                    return;
+                }
+                const user = session.user;
+                if (!user) {
+                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
+                    setButtonLoading(false, enableDIACButton, 'Enable Service', 'Enabling...');
+                    return;
+                }
+
+                if (enableDIACButton.textContent === 'Enable Service') {
+                    const confirmTOS = confirm("By enabling this service, you agree to the Die in a Cellar Terms of Service (colebohte.github.io/diactos)"); // Placeholder TOS
+                    if (!confirmTOS) { return; }
+                    console.log('Enable Service button clicked for Die in a Cellar.');
+                    setButtonLoading(true, enableDIACButton, 'Enable Service', 'Enabling...');
+                    try {
+                        const newCode = generateDIACLinkCode();
+                        const { data, error } = await supabaseClient
+                            .from('diac_data') // Changed table name
+                            .insert([{ LinkCode: newCode, user_id: user.id, username: user.user_metadata.display_name || user.email }]);
+                        if (error) {
+                            console.error('Error inserting DIAC Link Code:', error);
+                        } else {
+                            console.log('DIAC Link Code inserted successfully:', data);
+                            currentDIACLinkCode = newCode;
+                            diacLinkCodeSpan.textContent = currentDIACLinkCode;
+                            setDIACButtonState('enabled');
+                        }
+                    } catch (err) {
+                        console.error('Unexpected error during DIAC service enablement:', err);
+                    } finally {
+                        setButtonLoading(false, enableDIACButton, 'Enable Service', 'Enabling...');
+                    }
+                } else if (enableDIACButton.textContent === 'Disable Service') {
+                    const confirmDeactivation = confirm("Disabling this service will make you lose all the data you saved with it. Are you sure you want to disable it?");
+                    if (!confirmDeactivation) { return; }
+                    console.log('Disable DIAC Service button clicked.');
+                    setButtonLoading(true, enableDIACButton, 'Disable Service', 'Disabling...');
+                    try {
+                        const { error } = await supabaseClient
+                            .from('diac_data') // Changed table name
+                            .delete()
+                            .eq('user_id', user.id)
+                            .eq('LinkCode', currentDIACLinkCode);
+                        if (error) {
+                            console.error('Error disabling DIAC service:', error);
+                        } else {
+                            console.log('DIAC Service disabled successfully.');
+                            currentDIACLinkCode = null;
+                            setDIACButtonState('disabled');
+                        }
+                    } catch (err) {
+                        console.error('Unexpected error during DIAC service disablement:', err);
+                    } finally {
+                        setButtonLoading(false, enableDIACButton, 'Disable Service', 'Disabling...');
+                    }
+                }
+                await checkDIACServiceStatus(user.id);
+            });
+
 
             // TBP Show/Hide Code
             toggleCodeVisibilityButton.addEventListener('click', () => {
@@ -581,6 +764,36 @@
                 }
             });
 
+            // DIAC Show/Hide Code
+            toggleDIACCodeVisibilityButton.addEventListener('click', () => {
+                if (isDIACCodeVisible) {
+                    diacLinkCodeSpan.classList.add('blur-sm');
+                    diacLinkCodeSpan.classList.remove('no-blur');
+                    toggleDIACCodeVisibilityButton.textContent = 'Show Code';
+                } else {
+                    diacLinkCodeSpan.classList.remove('blur-sm');
+                    diacLinkCodeSpan.classList.add('no-blur');
+                    toggleDIACCodeVisibilityButton.textContent = 'Hide Code';
+                }
+                isDIACCodeVisible = !isDIACCodeVisible;
+            });
+
+            // Copy DIAC Code
+            copyDIACCodeButton.addEventListener('click', async () => {
+                if (currentDIACLinkCode) {
+                    try {
+                        const tempInput = document.createElement('textarea');
+                        tempInput.value = currentDIACLinkCode;
+                        document.body.appendChild(tempInput);
+                        tempInput.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(tempInput);
+                    } catch (err) {
+                        console.error('Failed to copy DIAC text:', err);
+                    }
+                }
+            });
+
             // Listen for auth state changes specific to the services page
             supabaseClient.auth.onAuthStateChange((event, session) => {
                 console.log('Auth state change detected on services page:', event, session);
@@ -591,7 +804,6 @@
                         window.location.href = 'signin';
                     }, 1500);
                 } else if (event === 'SIGNED_IN') {
-                    // If user signs in, re-check everything
                     checkSessionAndLoadServices();
                 }
             });

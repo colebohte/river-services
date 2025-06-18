@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In to River Account</title>
-    <link rel="icon" type="image/x-icon" href="favi.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -56,11 +55,15 @@
         </form>
 
         <p class="text-sm text-gray-600 mt-4">
-            <a href="forgot-password" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
+            <a href="/river-services/forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
         </p>
         <p class="text-sm text-gray-600 mt-4">
             Don't have an account?
-            <a href="signup" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
+            <a href="/river-services/signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
+        </p>
+        <p class="text-sm text-gray-600 mt-4">
+            Or sign in with a magic link:
+            <a href="signin" class="text-indigo-600 hover:text-indigo-800 underline">Magic Link Sign In</a>
         </p>
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
@@ -70,11 +73,20 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
-            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co';
-            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE';
+            // !!! IMPORTANT SUPABASE CONFIGURATION !!!
+            // These values MUST match your Supabase project's API settings exactly.
+            // Go to your Supabase Dashboard -> Project Settings -> API.
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // Your Project URL
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // Your project's anon public key
+
+            // The URL where Supabase will redirect the user AFTER successful sign-in.
+            // This URL MUST be added to your Supabase Project Dashboard under:
+            // Authentication -> Settings -> "Site URL" (e.g., https://colebohte.github.io)
+            // AND "Redirect URLs" (e.g., https://colebohte.github.io/river-services/account.html)
+            const REDIRECT_AFTER_SIGNIN = 'https://colebohte.github.io/river-services/account';
+
 
             let supabaseClient;
-            // Get messageArea element early to avoid ReferenceError
             const messageArea = document.getElementById('message-area');
 
             /**
@@ -102,10 +114,8 @@
             }
 
             try {
-                // Wait for script to fully load
                 await new Promise(resolve => setTimeout(resolve, 500));
 
-                // Check multiple possible global objects that Supabase might create
                 let SupabaseLib = null;
                 if (typeof supabase !== 'undefined') {
                     SupabaseLib = supabase;
@@ -121,15 +131,8 @@
                     throw new Error('Supabase library failed to load properly');
                 }
 
-                // Create the client
                 supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                console.log('Supabase client initialized successfully');
-
-                // Test the client with a simple call
-                const { error: testError } = await supabaseClient.auth.getSession();
-                if (testError && testError.message && !testError.message.includes('session')) {
-                    throw new Error(`Supabase client test failed: ${testError.message}`);
-                }
+                console.log('Supabase client initialized successfully on signin page');
 
             } catch (error) {
                 console.error('Supabase initialization failed:', error);
@@ -137,7 +140,6 @@
                 return;
             }
 
-            // DOM elements (rest of them can be fetched here as they are not used before this point)
             const signinForm = document.getElementById('signin-form');
             const signinEmailInput = document.getElementById('signin-email');
             const signinPasswordInput = document.getElementById('signin-password');
@@ -151,7 +153,7 @@
 
             // Handle form submission
             signinForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); // Prevent default form submission and page reload
+                e.preventDefault();
                 console.log('Sign In form submitted. Preventing default behavior.');
 
                 const email = signinEmailInput.value.trim();
@@ -185,11 +187,10 @@
 
                         // Redirect after delay
                         setTimeout(() => {
-                            console.log('Redirecting to account page...');
-                            window.location.href = 'account';
+                            console.log(`Redirecting to ${REDIRECT_AFTER_SIGNIN}...`);
+                            window.location.href = REDIRECT_AFTER_SIGNIN;
                         }, 1500);
                     } else {
-                        // This case should ideally not be reached if there's no error but no user
                         console.warn('Sign in API returned no error but also no user data. This is unexpected.', data);
                         showMessage('Sign in failed. Please check your credentials.', 'error');
                     }
@@ -206,22 +207,24 @@
             async function checkExistingSession() {
                 console.log('Checking for existing session on signin page...');
                 try {
-                    // Attempt to get the current session from local storage and validate it.
-                    let { data: { session }, error: getSessionError } = await supabaseClient.auth.getSession();
+                    const { data: { session }, error: getSessionError } = await supabaseClient.auth.getSession();
 
                     if (getSessionError) {
                         console.error('Error getting initial session:', getSessionError);
                         console.log('No valid session found due to error. Displaying sign-in form.');
+                        // An explicit sign out can help clear stale tokens, especially if 'bad_jwt' occurs here
+                        await supabaseClient.auth.signOut();
                         return;
                     }
 
                     if (session) {
                         console.log('Initial session found. Attempting to get user details from backend for robust check...');
+                        // The /user endpoint can trigger 'bad_jwt' if the session is compromised/stale
                         const { data: { user }, error: getUserError } = await supabaseClient.auth.getUser();
 
                         if (getUserError || !user) {
                             console.error('Error getting user details or user not found on backend:', getUserError || 'User object is null/undefined');
-                            console.log('User account not found on backend. Invalidating client session and staying on sign-in form.');
+                            console.log('User account not found on backend or session invalid. Invalidating client session and staying on sign-in form.');
                             await supabaseClient.auth.signOut(); // Explicitly clear client-side session
                             showMessage('Your session is no longer valid or your account has been deleted. Please sign in again.', 'error');
                             return;
@@ -230,7 +233,7 @@
                         console.log('Valid user account found on backend with active session, redirecting to account page.');
                         showMessage('Already signed in! Redirecting...', 'success');
                         setTimeout(() => {
-                            window.location.href = 'account';
+                            window.location.href = REDIRECT_AFTER_SIGNIN;
                         }, 1000);
                     } else {
                         console.log('No existing session found. Displaying sign-in form.');

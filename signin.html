@@ -55,15 +55,15 @@
         </form>
 
         <p class="text-sm text-gray-600 mt-4">
-            <a href="/river-services/forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
+            <a href="forgot-password" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
         </p>
         <p class="text-sm text-gray-600 mt-4">
             Don't have an account?
-            <a href="/river-services/signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
+            <a href="signup" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
         </p>
         <p class="text-sm text-gray-600 mt-4">
             Or sign in with a magic link:
-            <a href="signin" class="text-indigo-600 hover:text-indigo-800 underline">Magic Link Sign In</a>
+            <a href="magic" class="text-indigo-600 hover:text-indigo-800 underline">Magic Link Sign In</a>
         </p>
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
@@ -83,7 +83,7 @@
             // This URL MUST be added to your Supabase Project Dashboard under:
             // Authentication -> Settings -> "Site URL" (e.g., https://colebohte.github.io)
             // AND "Redirect URLs" (e.g., https://colebohte.github.io/river-services/account.html)
-            const REDIRECT_AFTER_SIGNIN = 'https://colebohte.github.io/river-services/account';
+            const REDIRECT_AFTER_SIGNIN = 'https://accounts.rivergames.ca/account';
 
 
             let supabaseClient;

@@ -147,7 +147,7 @@
 
                 if (!userError && user) {
                     console.log('User already authenticated. Redirecting to account.html.');
-                    window.location.href = 'account.html'; // Changed redirect to account.html
+                    window.location.href = 'account.html';
                 }
             }
             checkSessionAndRedirect();
@@ -162,11 +162,16 @@
                 }
 
                 setButtonLoading(true, sendMagicLinkButton, 'Send Magic Link', 'Sending...');
+                
+                // --- ADDED LOGGING HERE ---
+                console.log(`Attempting to send magic link to: ${email}, redirecting to: https://colebohte.github.io/river-services/account.html`);
+                // --- END ADDED LOGGING ---
+
                 try {
                     const { error } = await supabaseClient.auth.signInWithOtp({
                         email: email,
                         options: {
-                            emailRedirectTo: 'https://colebohte.github.io/river-services/account.html', // Changed redirect to account.html
+                            emailRedirectTo: 'https://colebohte.github.io/river-services/account.html',
                         }
                     });
 
@@ -190,7 +195,7 @@
                 console.log('Auth state change detected on magic.html:', event, session);
                 if (event === 'SIGNED_IN' && session) {
                     console.log('User signed in via magic link. Redirecting to account.html.');
-                    window.location.href = 'account.html'; // Changed redirect to account.html
+                    window.location.href = 'account.html';
                 }
             });
         });

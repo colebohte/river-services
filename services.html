@@ -60,33 +60,41 @@
     <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">River Services</h1><br><br>
         
-        <h3 class="text-2xl font-bold mb-6 text-gray-800">Tank Ball Physics</h3>
-        <p id="tbp-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="tbp-code-span"></span><br> 
-            <button id="toggle-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
-            <button id="copy-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
-        </p>
-        <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="text-gray-600 text-lg mb-4">
+            Loading services...
+        </div>
 
-        <!-- STBG Service Section -->
-        <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Survival the Ball Game</h3>
-        <p id="stbg-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="stbg-code-span"></span><br> 
-            <button id="toggle-stbg-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
-            <button id="copy-stbg-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
-        </p>
-        <button id="enable-stbg-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
-        <!-- End STBG Service Section -->
+        <!-- Service Management Section (initially hidden) -->
+        <div id="service-management-container" class="hidden">
+            <h3 class="text-2xl font-bold mb-6 text-gray-800">Tank Ball Physics</h3>
+            <p id="tbp-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
+                Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="tbp-code-span"></span><br> 
+                <button id="toggle-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+                <button id="copy-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
+            </p>
+            <button id="enable-tbp-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
 
-        <!-- New DIAC Service Section -->
-        <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Die in a Cellar</h3>
-        <p id="diac-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
-            Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="diac-code-span"></span><br> 
-            <button id="toggle-diac-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
-            <button id="copy-diac-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
-        </p>
-        <button id="enable-diac-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
-        <!-- End New DIAC Service Section -->
+            <!-- STBG Service Section -->
+            <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Survival the Ball Game</h3>
+            <p id="stbg-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
+                Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="stbg-code-span"></span><br> 
+                <button id="toggle-stbg-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+                <button id="copy-stbg-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
+            </p>
+            <button id="enable-stbg-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
+            <!-- End STBG Service Section -->
+
+            <!-- DIAC Service Section -->
+            <h3 class="text-2xl font-bold mb-6 text-gray-800 mt-8">Die in a Cellar</h3>
+            <p id="diac-link-display" class="text-gray-700 text-base font-semibold mb-4 hidden">
+                Your Link Code: <span class="font-mono text-indigo-600 blur-sm" id="diac-code-span"></span><br> 
+                <button id="toggle-diac-code-visibility" class="mt-2 px-3 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300 transition duration-150">Show Code</button>
+                <button id="copy-diac-code-button" class="mt-2 ml-2 px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition duration-150">Copy</button>
+            </p>
+            <button id="enable-diac-button" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Enable Service</button><br><br><hr>
+            <!-- End DIAC Service Section -->
+        </div>
 
         <div id="message-area-services" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
         
@@ -102,6 +110,8 @@
 
             let supabaseClient;
             const messageAreaServices = document.getElementById('message-area-services'); 
+            const serviceManagementContainer = document.getElementById('service-management-container');
+            const loadingIndicator = document.getElementById('loading-indicator'); // Get reference to loading indicator
 
             // TBP Elements
             const enableTBPButton = document.getElementById('enable-tbp-button');
@@ -130,8 +140,8 @@
             let currentSTBGLinkCode = null;
             let isSTBGCodeVisible = false;
 
-            let currentDIACLinkCode = null; // Variable for DIAC link code
-            let isDIACCodeVisible = false; // Visibility for DIAC code
+            let currentDIACLinkCode = null;
+            let isDIACCodeVisible = false;
 
 
             /**
@@ -175,6 +185,10 @@
             }
 
             try {
+                // Initial hide of content and show loading indicator
+                serviceManagementContainer.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 let SupabaseLib = null;
@@ -198,9 +212,12 @@
             } catch (error) {
                 console.error('Supabase initialization failed on services page:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error', messageAreaServices);
+                // Hide loading indicator even on error
+                loadingIndicator.classList.add('hidden');
+                // Redirect to magic.html if auth system is unavailable
                 setTimeout(() => {
-                    window.location.href = 'signin';
-                }, 2000);
+                    window.location.href = 'magic.html';
+                }, 1000);
                 return;
             }
 
@@ -270,22 +287,32 @@
             // Function to check session and update UI, specific for services.html
             async function checkSessionAndLoadServices() {
                 console.log('Checking session on services page...');
-                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                try {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-                if (userError || !user) {
-                    console.error('No active session or user found on services page:', userError || 'User object null');
-                    showMessage('No active session found. Redirecting to sign in.', 'error', messageAreaServices);
-                    setTimeout(() => {
-                        window.location.href = 'signin';
-                    }, 1500);
-                } else {
-                    console.log('User session active on services page. User:', user);
-                    // Now, check TBP service status for this user
-                    await checkTBPServiceStatus(user.id);
-                    // And check STBG service status for this user
-                    await checkSTBGServiceStatus(user.id);
-                    // And check DIAC service status for this user
-                    await checkDIACServiceStatus(user.id);
+                    if (userError || !user) {
+                        console.error('No active session or user found on services page:', userError || 'User object null');
+                        // Redirect to magic.html if not authenticated
+                        window.location.href = 'magic.html';
+                    } else {
+                        console.log('User session active on services page. User:', user);
+                        // Now, check TBP service status for this user
+                        await checkTBPServiceStatus(user.id);
+                        // And check STBG service status for this user
+                        await checkSTBGServiceStatus(user.id);
+                        // And check DIAC service status for this user
+                        await checkDIACServiceStatus(user.id);
+
+                        // All data loaded, hide loading and show content
+                        loadingIndicator.classList.add('hidden');
+                        serviceManagementContainer.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during session check:', err);
+                    showMessage('An unexpected error occurred during session check. Please try again.', 'error', messageAreaServices);
+                    // Critical error during user fetch, redirect to login page
+                    loadingIndicator.classList.add('hidden'); // Hide loading even on error
+                    window.location.href = 'magic.html';
                 }
             }
 
@@ -410,7 +437,7 @@
                 }
 
                 const { data: diacService, error } = await supabaseClient
-                    .from('diac_data') // Changed table name
+                    .from('diac_data')
                     .select('LinkCode, username')
                     .eq('user_id', userId)
                     .single();
@@ -432,7 +459,7 @@
                     if (diacService.username !== currentDisplayName) {
                         console.log('DIAC username out of sync. Updating...');
                         const { error: updateError } = await supabaseClient
-                            .from('diac_data') // Changed table name
+                            .from('diac_data')
                             .update({ username: currentDisplayName })
                             .eq('user_id', userId);
 
@@ -453,7 +480,7 @@
              * x = lowercase letter, n = digit (0-9).
              * @returns {string} The generated code.
              */
-            function generateTBPLinkCode() {
+            function generateLinkCode() {
                 const chars = 'abcdefghijklmnopqrstuvwxyz';
                 const digits = '0123456789';
                 const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
@@ -471,15 +498,12 @@
             enableTBPButton.addEventListener('click', async () => {
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
                 if (sessionError || !session) {
-                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
-                    setTimeout(() => { window.location.href = 'signin'; }, 1500);
+                    window.location.href = 'magic.html';
                     return;
                 }
                 const user = session.user;
                 if (!user) {
-                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
+                    window.location.href = 'magic.html';
                     return;
                 }
 
@@ -489,20 +513,23 @@
                     console.log('Enable Service button clicked for Tank Ball Physics.');
                     setButtonLoading(true, enableTBPButton, 'Enable Service', 'Enabling...');
                     try {
-                        const newCode = generateTBPLinkCode();
+                        const newCode = generateLinkCode();
                         const { data, error } = await supabaseClient
                             .from('tbp_data')
                             .insert([{ TBPLinkCode: newCode, user_id: user.id, username: user.user_metadata.display_name || user.email }]);
                         if (error) {
                             console.error('Error inserting TBP Link Code:', error);
+                            showMessage(`Failed to enable TBP service: ${error.message}`, 'error', messageAreaServices);
                         } else {
                             console.log('TBP Link Code inserted successfully:', data);
+                            showMessage('TBP service enabled successfully!', 'success', messageAreaServices);
                             currentTBPLinkCode = newCode;
                             tbpLinkCodeSpan.textContent = currentTBPLinkCode;
                             setTBPButtonState('enabled');
                         }
                     } catch (err) {
                         console.error('Unexpected error during TBP service enablement:', err);
+                        showMessage('An unexpected error occurred while enabling TBP service.', 'error', messageAreaServices);
                     } finally {
                         setButtonLoading(false, enableTBPButton, 'Enable Service', 'Enabling...');
                     }
@@ -519,13 +546,16 @@
                             .eq('TBPLinkCode', currentTBPLinkCode);
                         if (error) {
                             console.error('Error disabling TBP service:', error);
+                            showMessage(`Failed to disable TBP service: ${error.message}`, 'error', messageAreaServices);
                         } else {
                             console.log('TBP Service disabled successfully.');
+                            showMessage('TBP service disabled successfully!', 'success', messageAreaServices);
                             currentTBPLinkCode = null;
                             setTBPButtonState('disabled');
                         }
                     } catch (err) {
                         console.error('Unexpected error during TBP service disablement:', err);
+                        showMessage('An unexpected error occurred while disabling TBP service.', 'error', messageAreaServices);
                     } finally {
                         setButtonLoading(false, enableTBPButton, 'Disable Service', 'Disabling...');
                     }
@@ -533,38 +563,16 @@
                 await checkTBPServiceStatus(user.id);
             });
 
-            /**
-             * Generates a unique code for STBG with the structure "xxnnn-xxxnn-nxnnn".
-             * x = lowercase letter, n = digit (0-9).
-             * @returns {string} The generated code.
-             */
-            function generateSTBGLinkCode() {
-                const chars = 'abcdefghijklmnopqrstuvwxyz';
-                const digits = '0123456789';
-                const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
-                const getRandomDigit = () => digits.charAt(Math.floor(Math.random() * digits.length));
-                let part1 = getRandomChar() + getRandomChar();
-                for (let i = 0; i < 3; i++) { part1 += getRandomDigit(); }
-                let part2 = getRandomChar() + getRandomChar() + getRandomChar();
-                for (let i = 0; i < 2; i++) { part2 += getRandomDigit(); }
-                let part3 = getRandomDigit() + getRandomChar();
-                for (let i = 0; i < 3; i++) { part3 += getRandomDigit(); }
-                return `${part1}-${part2}-${part3}`;
-            }
-
             // Handle "Enable/Disable Service" button click for STBG
             enableSTBGButton.addEventListener('click', async () => {
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
                 if (sessionError || !session) {
-                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableSTBGButton, 'Enable Service', 'Enabling...');
-                    setTimeout(() => { window.location.href = 'signin'; }, 1500);
+                    window.location.href = 'magic.html';
                     return;
                 }
                 const user = session.user;
                 if (!user) {
-                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableSTBGButton, 'Enable Service', 'Enabling...');
+                    window.location.href = 'magic.html';
                     return;
                 }
 
@@ -574,20 +582,23 @@
                     console.log('Enable Service button clicked for STBG.');
                     setButtonLoading(true, enableSTBGButton, 'Enable Service', 'Enabling...');
                     try {
-                        const newCode = generateSTBGLinkCode();
+                        const newCode = generateLinkCode();
                         const { data, error } = await supabaseClient
                             .from('stbg_data')
                             .insert([{ LinkCode: newCode, user_id: user.id, username: user.user_metadata.display_name || user.email }]);
                         if (error) {
                             console.error('Error inserting STBG Link Code:', error);
+                            showMessage(`Failed to enable STBG service: ${error.message}`, 'error', messageAreaServices);
                         } else {
                             console.log('STBG Link Code inserted successfully:', data);
+                            showMessage('STBG service enabled successfully!', 'success', messageAreaServices);
                             currentSTBGLinkCode = newCode;
                             stbgLinkCodeSpan.textContent = currentSTBGLinkCode;
                             setSTBGButtonState('enabled');
                         }
                     } catch (err) {
                         console.error('Unexpected error during STBG service enablement:', err);
+                        showMessage('An unexpected error occurred while enabling STBG service.', 'error', messageAreaServices);
                     } finally {
                         setButtonLoading(false, enableSTBGButton, 'Enable Service', 'Enabling...');
                     }
@@ -604,13 +615,16 @@
                             .eq('LinkCode', currentSTBGLinkCode);
                         if (error) {
                             console.error('Error disabling STBG service:', error);
+                            showMessage(`Failed to disable STBG service: ${error.message}`, 'error', messageAreaServices);
                         } else {
                             console.log('STBG Service disabled successfully.');
+                            showMessage('STBG service disabled successfully!', 'success', messageAreaServices);
                             currentSTBGLinkCode = null;
                             setSTBGButtonState('disabled');
                         }
                     } catch (err) {
                         console.error('Unexpected error during STBG service disablement:', err);
+                        showMessage('An unexpected error occurred while disabling STBG service.', 'error', messageAreaServices);
                     } finally {
                         setButtonLoading(false, enableSTBGButton, 'Disable Service', 'Disabling...');
                     }
@@ -618,38 +632,16 @@
                 await checkSTBGServiceStatus(user.id);
             });
 
-            /**
-             * Generates a unique code for DIAC with the structure "xxnnn-xxxnn-nxnnn".
-             * x = lowercase letter, n = digit (0-9).
-             * @returns {string} The generated code.
-             */
-            function generateDIACLinkCode() {
-                const chars = 'abcdefghijklmnopqrstuvwxyz';
-                const digits = '0123456789';
-                const getRandomChar = () => chars.charAt(Math.floor(Math.random() * chars.length));
-                const getRandomDigit = () => digits.charAt(Math.floor(Math.random() * digits.length));
-                let part1 = getRandomChar() + getRandomChar();
-                for (let i = 0; i < 3; i++) { part1 += getRandomDigit(); }
-                let part2 = getRandomChar() + getRandomChar() + getRandomChar();
-                for (let i = 0; i < 2; i++) { part2 += getRandomDigit(); }
-                let part3 = getRandomDigit() + getRandomChar();
-                for (let i = 0; i < 3; i++) { part3 += getRandomDigit(); }
-                return `${part1}-${part2}-${part3}`;
-            }
-
             // Handle "Enable/Disable Service" button click for DIAC
             enableDIACButton.addEventListener('click', async () => {
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
                 if (sessionError || !session) {
-                    showMessage('You must be logged in to manage services. Redirecting to sign in.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableDIACButton, 'Enable Service', 'Enabling...');
-                    setTimeout(() => { window.location.href = 'signin'; }, 1500);
+                    window.location.href = 'magic.html';
                     return;
                 }
                 const user = session.user;
                 if (!user) {
-                    showMessage('User data not available. Please try logging in again.', 'error', messageAreaServices);
-                    setButtonLoading(false, enableDIACButton, 'Enable Service', 'Enabling...');
+                    window.location.href = 'magic.html';
                     return;
                 }
 
@@ -659,20 +651,23 @@
                     console.log('Enable Service button clicked for Die in a Cellar.');
                     setButtonLoading(true, enableDIACButton, 'Enable Service', 'Enabling...');
                     try {
-                        const newCode = generateDIACLinkCode();
+                        const newCode = generateLinkCode();
                         const { data, error } = await supabaseClient
                             .from('diac_data') // Changed table name
                             .insert([{ LinkCode: newCode, user_id: user.id, username: user.user_metadata.display_name || user.email }]);
                         if (error) {
                             console.error('Error inserting DIAC Link Code:', error);
+                            showMessage(`Failed to enable DIAC service: ${error.message}`, 'error', messageAreaServices);
                         } else {
                             console.log('DIAC Link Code inserted successfully:', data);
+                            showMessage('DIAC service enabled successfully!', 'success', messageAreaServices);
                             currentDIACLinkCode = newCode;
                             diacLinkCodeSpan.textContent = currentDIACLinkCode;
                             setDIACButtonState('enabled');
                         }
                     } catch (err) {
                         console.error('Unexpected error during DIAC service enablement:', err);
+                        showMessage('An unexpected error occurred while enabling DIAC service.', 'error', messageAreaServices);
                     } finally {
                         setButtonLoading(false, enableDIACButton, 'Enable Service', 'Enabling...');
                     }
@@ -689,13 +684,16 @@
                             .eq('LinkCode', currentDIACLinkCode);
                         if (error) {
                             console.error('Error disabling DIAC service:', error);
+                            showMessage(`Failed to disable DIAC service: ${error.message}`, 'error', messageAreaServices);
                         } else {
                             console.log('DIAC Service disabled successfully.');
+                            showMessage('DIAC service disabled successfully!', 'success', messageAreaServices);
                             currentDIACLinkCode = null;
                             setDIACButtonState('disabled');
                         }
                     } catch (err) {
                         console.error('Unexpected error during DIAC service disablement:', err);
+                        showMessage('An unexpected error occurred while disabling DIAC service.', 'error', messageAreaServices);
                     } finally {
                         setButtonLoading(false, enableDIACButton, 'Disable Service', 'Disabling...');
                     }

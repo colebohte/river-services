@@ -21,6 +21,23 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             background: url("bg.jpg");
+            background-size: cover;
+            background-position: center;
+        }
+        /* Spinner Styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto; /* Center the spinner and add some space */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -28,7 +45,14 @@
     <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
 
-        <form id="signin-form" class="space-y-4">
+        <!-- Loading Indicator with Spinner -->
+        <div id="loading-indicator" class="text-gray-600 text-lg mb-4 hidden">
+            <div class="spinner"></div>
+            <span id="loading-text">Loading...</span>
+        </div>
+
+        <!-- Sign In Form (initially hidden) -->
+        <form id="signin-form" class="space-y-4 hidden">
             <input
                 type="email"
                 id="signin-email"
@@ -55,14 +79,14 @@
         </form>
 
         <p class="text-sm text-gray-600 mt-4">
-            <a href="magic" class="text-indigo-600 hover:text-indigo-800 underline">Passwordless login</a>
+            <a href="magic.html" class="text-indigo-600 hover:text-indigo-800 underline">Passwordless login</a>
         </p>
         <p class="text-sm text-gray-600 mt-4">
-            <a href="forgot-password" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
+            <a href="forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
         </p>
         <p class="text-sm text-gray-600 mt-4">
             Don't have an account?
-            <a href="signup" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
+            <a href="signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
         </p>
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
@@ -86,6 +110,13 @@
 
             let supabaseClient;
             const messageArea = document.getElementById('message-area');
+            const signinForm = document.getElementById('signin-form');
+            const signinEmailInput = document.getElementById('signin-email');
+            const signinPasswordInput = document.getElementById('signin-password');
+            const signinButton = document.getElementById('signin-button');
+            const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner container
+            const loadingTextSpan = document.getElementById('loading-text'); // Reference to the text inside loading indicator
+
 
             /**
              * Displays a message to the user in the message area.
@@ -112,6 +143,11 @@
             }
 
             try {
+                // Initially hide the form and show the loading indicator
+                signinForm.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Initializing...'; // Initial loading text
+
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 let SupabaseLib = null;
@@ -135,13 +171,12 @@
             } catch (error) {
                 console.error('Supabase initialization failed:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error');
+                // Hide loading indicator even on error, and show form (or redirect)
+                loadingIndicator.classList.add('hidden');
+                signinForm.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Loading...'; // Reset text
                 return;
             }
-
-            const signinForm = document.getElementById('signin-form');
-            const signinEmailInput = document.getElementById('signin-email');
-            const signinPasswordInput = document.getElementById('signin-password');
-            const signinButton = document.getElementById('signin-button');
 
 
             function setButtonLoading(loading) {
@@ -164,6 +199,11 @@
                 }
 
                 setButtonLoading(true);
+                // Show loading spinner and hide form
+                signinForm.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Signing in...';
+
                 console.log('Attempting to sign in with email:', email);
 
                 try {
@@ -175,11 +215,16 @@
                     if (error) {
                         console.error('Sign in API error:', error);
                         showMessage(error.message, 'error');
+                        // Hide loading spinner and show form again on error
+                        loadingIndicator.classList.add('hidden');
+                        signinForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Loading...'; // Reset text
                     } else if (data.user) {
                         console.log('Sign in successful! User data:', data.user);
                         showMessage('Signed in successfully! Redirecting...', 'success');
+                        loadingTextSpan.textContent = 'Redirecting...'; // Change text for redirect
 
-                        // Clear form
+                        // Clear form (no need to re-show form as it's redirecting)
                         signinEmailInput.value = '';
                         signinPasswordInput.value = '';
 
@@ -191,10 +236,18 @@
                     } else {
                         console.warn('Sign in API returned no error but also no user data. This is unexpected.', data);
                         showMessage('Sign in failed. Please check your credentials.', 'error');
+                        // Hide loading spinner and show form again on unexpected state
+                        loadingIndicator.classList.add('hidden');
+                        signinForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Loading...'; // Reset text
                     }
                 } catch (err) {
                     console.error('Unexpected error during sign in process:', err);
                     showMessage('An unexpected error occurred during sign in.', 'error');
+                    // Hide loading spinner and show form again on unexpected error
+                    loadingIndicator.classList.add('hidden');
+                    signinForm.classList.remove('hidden');
+                    loadingTextSpan.textContent = 'Loading...'; // Reset text
                 } finally {
                     setButtonLoading(false);
                     console.log('Sign in process completed (or failed). Button loading state reset.');
@@ -204,20 +257,25 @@
             // Check for existing session on page load
             async function checkExistingSession() {
                 console.log('Checking for existing session on signin page...');
+                loadingTextSpan.textContent = 'Checking session...'; // Update text for session check
+
                 try {
                     const { data: { session }, error: getSessionError } = await supabaseClient.auth.getSession();
 
                     if (getSessionError) {
                         console.error('Error getting initial session:', getSessionError);
                         console.log('No valid session found due to error. Displaying sign-in form.');
-                        // An explicit sign out can help clear stale tokens, especially if 'bad_jwt' occurs here
-                        await supabaseClient.auth.signOut();
+                        await supabaseClient.auth.signOut(); // Clear any potentially bad session
+                        // Hide loading spinner and show form
+                        loadingIndicator.classList.add('hidden');
+                        signinForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Loading...'; // Reset text
                         return;
                     }
 
                     if (session) {
                         console.log('Initial session found. Attempting to get user details from backend for robust check...');
-                        // The /user endpoint can trigger 'bad_jwt' if the session is compromised/stale
+                        loadingTextSpan.textContent = 'Verifying user...'; // Update text for user verification
                         const { data: { user }, error: getUserError } = await supabaseClient.auth.getUser();
 
                         if (getUserError || !user) {
@@ -225,20 +283,33 @@
                             console.log('User account not found on backend or session invalid. Invalidating client session and staying on sign-in form.');
                             await supabaseClient.auth.signOut(); // Explicitly clear client-side session
                             showMessage('Your session is no longer valid or your account has been deleted. Please sign in again.', 'error');
+                            // Hide loading spinner and show form
+                            loadingIndicator.classList.add('hidden');
+                            signinForm.classList.remove('hidden');
+                            loadingTextSpan.textContent = 'Loading...'; // Reset text
                             return;
                         }
 
                         console.log('Valid user account found on backend with active session, redirecting to account page.');
                         showMessage('Already signed in! Redirecting...', 'success');
+                        loadingTextSpan.textContent = 'Redirecting...'; // Change text for redirect
                         setTimeout(() => {
                             window.location.href = REDIRECT_AFTER_SIGNIN;
                         }, 1000);
                     } else {
                         console.log('No existing session found. Displaying sign-in form.');
+                        // Hide loading spinner and show form
+                        loadingIndicator.classList.add('hidden');
+                        signinForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Loading...'; // Reset text
                     }
                 } catch (err) {
                     console.error('An unexpected error occurred during session check or user fetch:', err);
                     showMessage('An unexpected error occurred during session check. Please try again.', 'error');
+                    // Hide loading spinner and show form on unexpected error
+                    loadingIndicator.classList.add('hidden');
+                    signinForm.classList.remove('hidden');
+                    loadingTextSpan.textContent = 'Loading...'; // Reset text
                 }
             }
 

@@ -78,16 +78,19 @@
             </button>
         </form>
 
-        <p class="text-sm text-gray-600 mt-4">
-            <a href="magic.html" class="text-indigo-600 hover:text-indigo-800 underline">Passwordless login</a>
-        </p>
-        <p class="text-sm text-gray-600 mt-4">
-            <a href="forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
-        </p>
-        <p class="text-sm text-gray-600 mt-4">
-            Don't have an account?
-            <a href="signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
-        </p>
+        <!-- Links Section (initially hidden, shown with form) -->
+        <div id="signin-links" class="hidden">
+            <p class="text-sm text-gray-600 mt-4">
+                <a href="magic.html" class="text-indigo-600 hover:text-indigo-800 underline">Passwordless login</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-4">
+                <a href="forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
+            </p>
+            <p class="text-sm text-gray-600 mt-4">
+                Don't have an account?
+                <a href="signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
+            </p>
+        </div>
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
 
@@ -116,6 +119,7 @@
             const signinButton = document.getElementById('signin-button');
             const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner container
             const loadingTextSpan = document.getElementById('loading-text'); // Reference to the text inside loading indicator
+            const signinLinks = document.getElementById('signin-links'); // Reference to the links container
 
 
             /**
@@ -143,8 +147,9 @@
             }
 
             try {
-                // Initially hide the form and show the loading indicator
+                // Initially hide the form and links, show the loading indicator
                 signinForm.classList.add('hidden');
+                signinLinks.classList.add('hidden'); // Hide links
                 loadingIndicator.classList.remove('hidden');
                 loadingTextSpan.textContent = 'Initializing...'; // Initial loading text
 
@@ -171,9 +176,10 @@
             } catch (error) {
                 console.error('Supabase initialization failed:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error');
-                // Hide loading indicator even on error, and show form (or redirect)
+                // Hide loading indicator even on error, and show form and links
                 loadingIndicator.classList.add('hidden');
                 signinForm.classList.remove('hidden');
+                signinLinks.classList.remove('hidden'); // Show links on error
                 loadingTextSpan.textContent = 'Loading...'; // Reset text
                 return;
             }
@@ -199,8 +205,9 @@
                 }
 
                 setButtonLoading(true);
-                // Show loading spinner and hide form
+                // Show loading spinner and hide form and links
                 signinForm.classList.add('hidden');
+                signinLinks.classList.add('hidden'); // Hide links
                 loadingIndicator.classList.remove('hidden');
                 loadingTextSpan.textContent = 'Signing in...';
 
@@ -215,9 +222,10 @@
                     if (error) {
                         console.error('Sign in API error:', error);
                         showMessage(error.message, 'error');
-                        // Hide loading spinner and show form again on error
+                        // Hide loading spinner and show form and links again on error
                         loadingIndicator.classList.add('hidden');
                         signinForm.classList.remove('hidden');
+                        signinLinks.classList.remove('hidden'); // Show links
                         loadingTextSpan.textContent = 'Loading...'; // Reset text
                     } else if (data.user) {
                         console.log('Sign in successful! User data:', data.user);
@@ -236,17 +244,19 @@
                     } else {
                         console.warn('Sign in API returned no error but also no user data. This is unexpected.', data);
                         showMessage('Sign in failed. Please check your credentials.', 'error');
-                        // Hide loading spinner and show form again on unexpected state
+                        // Hide loading spinner and show form and links again on unexpected state
                         loadingIndicator.classList.add('hidden');
                         signinForm.classList.remove('hidden');
+                        signinLinks.classList.remove('hidden'); // Show links
                         loadingTextSpan.textContent = 'Loading...'; // Reset text
                     }
                 } catch (err) {
                     console.error('Unexpected error during sign in process:', err);
                     showMessage('An unexpected error occurred during sign in.', 'error');
-                    // Hide loading spinner and show form again on unexpected error
+                    // Hide loading spinner and show form and links on unexpected error
                     loadingIndicator.classList.add('hidden');
                     signinForm.classList.remove('hidden');
+                    signinLinks.classList.remove('hidden'); // Show links
                     loadingTextSpan.textContent = 'Loading...'; // Reset text
                 } finally {
                     setButtonLoading(false);
@@ -266,9 +276,10 @@
                         console.error('Error getting initial session:', getSessionError);
                         console.log('No valid session found due to error. Displaying sign-in form.');
                         await supabaseClient.auth.signOut(); // Clear any potentially bad session
-                        // Hide loading spinner and show form
+                        // Hide loading spinner and show form and links
                         loadingIndicator.classList.add('hidden');
                         signinForm.classList.remove('hidden');
+                        signinLinks.classList.remove('hidden'); // Show links
                         loadingTextSpan.textContent = 'Loading...'; // Reset text
                         return;
                     }
@@ -283,9 +294,10 @@
                             console.log('User account not found on backend or session invalid. Invalidating client session and staying on sign-in form.');
                             await supabaseClient.auth.signOut(); // Explicitly clear client-side session
                             showMessage('Your session is no longer valid or your account has been deleted. Please sign in again.', 'error');
-                            // Hide loading spinner and show form
+                            // Hide loading spinner and show form and links
                             loadingIndicator.classList.add('hidden');
                             signinForm.classList.remove('hidden');
+                            signinLinks.classList.remove('hidden'); // Show links
                             loadingTextSpan.textContent = 'Loading...'; // Reset text
                             return;
                         }
@@ -298,17 +310,19 @@
                         }, 1000);
                     } else {
                         console.log('No existing session found. Displaying sign-in form.');
-                        // Hide loading spinner and show form
+                        // Hide loading spinner and show form and links
                         loadingIndicator.classList.add('hidden');
                         signinForm.classList.remove('hidden');
+                        signinLinks.classList.remove('hidden'); // Show links
                         loadingTextSpan.textContent = 'Loading...'; // Reset text
                     }
                 } catch (err) {
                     console.error('An unexpected error occurred during session check or user fetch:', err);
                     showMessage('An unexpected error occurred during session check. Please try again.', 'error');
-                    // Hide loading spinner and show form on unexpected error
+                    // Hide loading spinner and show form and links on unexpected error
                     loadingIndicator.classList.add('hidden');
                     signinForm.classList.remove('hidden');
+                    signinLinks.classList.remove('hidden'); // Show links
                     loadingTextSpan.textContent = 'Loading...'; // Reset text
                 }
             }

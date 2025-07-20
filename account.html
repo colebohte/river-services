@@ -70,7 +70,7 @@
         <!-- Loading Indicator with Spinner -->
         <div id="loading-indicator" class="text-gray-600 text-lg mb-4">
             <div class="spinner"></div>
-            Loading account data...
+            <span id="loading-text">Loading account data...</span>
         </div>
 
         <!-- Account Content (initially hidden) -->
@@ -104,7 +104,8 @@
             const userIdSpan = document.getElementById('user-id');
             const userEmailSpan = document.getElementById('user-email');
             const logoutButton = document.getElementById('logout-button');
-            const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner
+            const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner container
+            const loadingTextSpan = document.getElementById('loading-text'); // Reference to the text inside loading indicator
             const accountContent = document.getElementById('account-content'); // Reference to the main content div
 
             /**
@@ -148,9 +149,10 @@
             }
 
             try {
-                // Initially hide content and show loading spinner
+                // Initially hide content and show loading spinner with default text
                 accountContent.classList.add('hidden');
                 loadingIndicator.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Loading account data...'; // Ensure initial text is correct
 
                 await new Promise(resolve => setTimeout(resolve, 500)); // Give time for script to load
 
@@ -226,6 +228,7 @@
                 // Show loading spinner and hide content when logging out
                 accountContent.classList.add('hidden');
                 loadingIndicator.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Logging out...'; // Change text for logout
 
                 const { error } = await supabaseClient.auth.signOut();
 
@@ -235,6 +238,7 @@
                     // Hide loading spinner on error, show content again (optional, or redirect)
                     loadingIndicator.classList.add('hidden');
                     accountContent.classList.remove('hidden'); // Re-show if not redirecting immediately
+                    loadingTextSpan.textContent = 'Loading account data...'; // Revert text on error
                 } else {
                     console.log('Successfully logged out. Redirecting to signin page.');
                     showMessage('Logged out successfully! Redirecting...', 'success', messageArea);
@@ -257,10 +261,12 @@
                     // Ensure content is hidden and spinner is shown before redirecting
                     accountContent.classList.add('hidden');
                     loadingIndicator.classList.remove('hidden');
+                    loadingTextSpan.textContent = 'Redirecting to sign in...'; // Change text for redirect
                     setTimeout(() => {
                         window.location.href = 'signin.html';
                     }, 1500);
                 } else if (event === 'SIGNED_IN') {
+                    // If signed in, re-run the check to display user data and hide spinner
                     checkSessionAndDisplayUser();
                 }
             });

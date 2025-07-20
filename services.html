@@ -54,14 +54,31 @@
             filter: blur(0);
             transition: filter 0.2s ease-in-out;
         }
+
+        /* Spinner Styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto; /* Center the spinner and add some space */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">River Services</h1><br><br>
         
-        <!-- Loading Indicator -->
+        <!-- Loading Indicator with Spinner -->
         <div id="loading-indicator" class="text-gray-600 text-lg mb-4">
+            <div class="spinner"></div>
             Loading services...
         </div>
 

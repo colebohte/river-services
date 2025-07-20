@@ -223,11 +223,18 @@
             logoutButton.addEventListener('click', async () => {
                 console.log('Logout button clicked.');
                 setButtonLoading(true, logoutButton, 'Logout', 'Logging Out...');
+                // Show loading spinner and hide content when logging out
+                accountContent.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+
                 const { error } = await supabaseClient.auth.signOut();
 
                 if (error) {
                     console.error('Logout error:', error);
                     showMessage(`Logout failed: ${error.message}`, 'error', messageArea);
+                    // Hide loading spinner on error, show content again (optional, or redirect)
+                    loadingIndicator.classList.add('hidden');
+                    accountContent.classList.remove('hidden'); // Re-show if not redirecting immediately
                 } else {
                     console.log('Successfully logged out. Redirecting to signin page.');
                     showMessage('Logged out successfully! Redirecting...', 'success', messageArea);
@@ -247,6 +254,9 @@
                 if (event === 'SIGNED_OUT' || !session) {
                     console.log('User signed out or session expired. Redirecting to signin page.');
                     showMessage('Your session has ended. Redirecting to sign in.', 'error', messageArea);
+                    // Ensure content is hidden and spinner is shown before redirecting
+                    accountContent.classList.add('hidden');
+                    loadingIndicator.classList.remove('hidden');
                     setTimeout(() => {
                         window.location.href = 'signin.html';
                     }, 1500);

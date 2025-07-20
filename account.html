@@ -45,23 +45,48 @@
             background-size: cover;
             background-position: center;
         }
+
+        /* Spinner Styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto; /* Center the spinner and add some space */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">Account Settings</h1>
 
-        <div id="user-info" class="text-left mb-6">
-            <p class="text-gray-700 text-lg mb-2">Welcome, <span id="user-display-name" class="font-semibold text-indigo-600">Loading...</span></p>
-            <p class="text-gray-500 text-sm">User ID: <span id="user-id" class="font-mono text-xs">Loading...</span></p>
-            <p class="text-gray-500 text-sm">Email: <span id="user-email" class="font-mono text-xs">Loading...</span></p>
+        <!-- Loading Indicator with Spinner -->
+        <div id="loading-indicator" class="text-gray-600 text-lg mb-4">
+            <div class="spinner"></div>
+            Loading account data...
         </div>
-        
-        <a href="username"><button class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Change Username</button></a><br><br>
-        <a href="password"><button class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Change Password</button></a><br><br>
-        <a href="services"><button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200">Manage River Services</button></a><br><br>
-        <a href="delete_account"><button class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200">Delete Account</button></a><br><hr><br>
-        <button id="logout-button" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200">Logout</button>
+
+        <!-- Account Content (initially hidden) -->
+        <div id="account-content" class="hidden">
+            <div id="user-info" class="text-left mb-6">
+                <p class="text-gray-700 text-lg mb-2">Welcome, <span id="user-display-name" class="font-semibold text-indigo-600"></span></p>
+                <p class="text-gray-500 text-sm">User ID: <span id="user-id" class="font-mono text-xs"></span></p>
+                <p class="text-gray-500 text-sm">Email: <span id="user-email" class="font-mono text-xs"></span></p>
+            </div>
+            
+            <a href="username"><button class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Change Username</button></a><br><br>
+            <a href="password"><button class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200">Change Password</button></a><br><br>
+            <a href="services.html"><button class="w-full bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600 transition duration-200">Manage River Services</button></a><br><br>
+            <a href="delete_account"><button class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200">Delete Account</button></a><br><hr><br>
+            <button id="logout-button" class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200">Logout</button>
+        </div>
 
         <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
     </div>
@@ -79,6 +104,8 @@
             const userIdSpan = document.getElementById('user-id');
             const userEmailSpan = document.getElementById('user-email');
             const logoutButton = document.getElementById('logout-button');
+            const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner
+            const accountContent = document.getElementById('account-content'); // Reference to the main content div
 
             /**
              * Displays a message to the user in a specified message area.
@@ -121,6 +148,10 @@
             }
 
             try {
+                // Initially hide content and show loading spinner
+                accountContent.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+
                 await new Promise(resolve => setTimeout(resolve, 500)); // Give time for script to load
 
                 let SupabaseLib = null;
@@ -144,8 +175,10 @@
             } catch (error) {
                 console.error('Supabase initialization failed on account page:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error', messageArea);
+                // Hide loading spinner even on error
+                loadingIndicator.classList.add('hidden');
                 setTimeout(() => {
-                    window.location.href = 'signin';
+                    window.location.href = 'signin.html'; // Or 'magic.html'
                 }, 2000);
                 return;
             }
@@ -153,19 +186,36 @@
             // Function to check session and update UI
             async function checkSessionAndDisplayUser() {
                 console.log('Checking session on account page...');
-                const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+                try {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-                if (userError || !user) {
-                    console.error('No active session or user found:', userError || 'User object null');
-                    showMessage('No active session found. Redirecting to sign in.', 'error', messageArea);
+                    if (userError || !user) {
+                        console.error('No active session or user found:', userError || 'User object null');
+                        showMessage('No active session found. Redirecting to sign in.', 'error', messageArea);
+                        // An explicit sign out can help clear stale tokens, especially if 'bad_jwt' occurs here
+                        await supabaseClient.auth.signOut();
+                        setTimeout(() => {
+                            window.location.href = 'signin.html'; // Or 'magic.html'
+                        }, 1500);
+                    } else {
+                        console.log('User session active. User:', user);
+                        userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email;
+                        userIdSpan.textContent = user.id;
+                        userEmailSpan.textContent = user.email;
+
+                        // All data loaded, hide loading and show content
+                        loadingIndicator.classList.add('hidden');
+                        accountContent.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during session check:', err);
+                    showMessage('An unexpected error occurred during session check. Please try again.', 'error', messageArea);
+                    // Hide loading spinner even on error
+                    loadingIndicator.classList.add('hidden');
+                    await supabaseClient.auth.signOut(); // Ensure session is cleared on unexpected error
                     setTimeout(() => {
-                        window.location.href = 'signin';
+                        window.location.href = 'signin.html'; // Or 'magic.html'
                     }, 1500);
-                } else {
-                    console.log('User session active. User:', user);
-                    userDisplayNameSpan.textContent = user.user_metadata.display_name || user.email;
-                    userIdSpan.textContent = user.id;
-                    userEmailSpan.textContent = user.email;
                 }
             }
 
@@ -182,7 +232,7 @@
                     console.log('Successfully logged out. Redirecting to signin page.');
                     showMessage('Logged out successfully! Redirecting...', 'success', messageArea);
                     setTimeout(() => {
-                        window.location.href = 'signin';
+                        window.location.href = 'signin.html';
                     }, 1500);
                 }
                 setButtonLoading(false, logoutButton, 'Logout', 'Logging Out...');
@@ -198,7 +248,7 @@
                     console.log('User signed out or session expired. Redirecting to signin page.');
                     showMessage('Your session has ended. Redirecting to sign in.', 'error', messageArea);
                     setTimeout(() => {
-                        window.location.href = 'signin';
+                        window.location.href = 'signin.html';
                     }, 1500);
                 } else if (event === 'SIGNED_IN') {
                     checkSessionAndDisplayUser();

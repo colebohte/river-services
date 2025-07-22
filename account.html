@@ -67,8 +67,14 @@
     <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">Account Settings</h1>
 
+        <!-- Deletion Pending Banner (initially hidden) -->
+        <div id="deletion-pending-banner" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+            <strong class="font-bold">Important:</strong>
+            <span class="block sm:inline">Your account is pending deletion. If for some reason, you think this was a mistake please contact <a href="mailto:river-games@googlegroups.com" class="underline text-red-800 hover:text-red-900">support</a>.</span>
+        </div>
+
         <!-- Loading Indicator with Spinner -->
-        <div id="loading-indicator" class="text-gray-600 text-lg mb-4">
+        <div id="loading-indicator" class="text-gray-600 text-lg mb-4 hidden">
             <div class="spinner"></div>
             <span id="loading-text">Loading account data...</span>
         </div>
@@ -104,9 +110,10 @@
             const userIdSpan = document.getElementById('user-id');
             const userEmailSpan = document.getElementById('user-email');
             const logoutButton = document.getElementById('logout-button');
-            const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner container
-            const loadingTextSpan = document.getElementById('loading-text'); // Reference to the text inside loading indicator
-            const accountContent = document.getElementById('account-content'); // Reference to the main content div
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const loadingTextSpan = document.getElementById('loading-text');
+            const accountContent = document.getElementById('account-content');
+            const deletionPendingBanner = document.getElementById('deletion-pending-banner'); // Get the banner element
 
             /**
              * Displays a message to the user in a specified message area.
@@ -151,10 +158,11 @@
             try {
                 // Initially hide content and show loading spinner with default text
                 accountContent.classList.add('hidden');
+                deletionPendingBanner.classList.add('hidden'); // Ensure banner is hidden initially
                 loadingIndicator.classList.remove('hidden');
-                loadingTextSpan.textContent = 'Loading account data...'; // Ensure initial text is correct
+                loadingTextSpan.textContent = 'Loading account data...';
 
-                await new Promise(resolve => setTimeout(resolve, 500)); // Give time for script to load
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 let SupabaseLib = null;
                 if (typeof supabase !== 'undefined') {
@@ -194,7 +202,6 @@
                     if (userError || !user) {
                         console.error('No active session or user found:', userError || 'User object null');
                         showMessage('No active session found. Redirecting to sign in.', 'error', messageArea);
-                        // An explicit sign out can help clear stale tokens, especially if 'bad_jwt' occurs here
                         await supabaseClient.auth.signOut();
                         setTimeout(() => {
                             window.location.href = 'signin.html'; // Or 'magic.html'
@@ -205,6 +212,24 @@
                         userIdSpan.textContent = user.id;
                         userEmailSpan.textContent = user.email;
 
+                        // Check if account is pending deletion
+                        const { data: deletionRequest, error: deletionError } = await supabaseClient
+                            .from('deletion_requests')
+                            .select('user_email_address')
+                            .eq('user_email_address', user.email)
+                            .single();
+
+                        if (deletionError && deletionError.code !== 'PGRST116') { // PGRST116 means "no rows found"
+                            console.error('Error checking deletion status:', deletionError.message);
+                            showMessage('Error checking deletion status. Please try again later.', 'error', messageArea);
+                        } else if (deletionRequest) {
+                            console.log('Account is pending deletion:', deletionRequest.user_email_address);
+                            deletionPendingBanner.classList.remove('hidden'); // Show the banner
+                        } else {
+                            console.log('Account is NOT pending deletion.');
+                            deletionPendingBanner.classList.add('hidden'); // Ensure banner is hidden
+                        }
+
                         // All data loaded, hide loading and show content
                         loadingIndicator.classList.add('hidden');
                         accountContent.classList.remove('hidden');
@@ -212,9 +237,8 @@
                 } catch (err) {
                     console.error('An unexpected error occurred during session check:', err);
                     showMessage('An unexpected error occurred during session check. Please try again.', 'error', messageArea);
-                    // Hide loading spinner even on error
                     loadingIndicator.classList.add('hidden');
-                    await supabaseClient.auth.signOut(); // Ensure session is cleared on unexpected error
+                    await supabaseClient.auth.signOut();
                     setTimeout(() => {
                         window.location.href = 'signin.html'; // Or 'magic.html'
                     }, 1500);
@@ -227,6 +251,7 @@
                 setButtonLoading(true, logoutButton, 'Logout', 'Logging Out...');
                 // Show loading spinner and hide content when logging out
                 accountContent.classList.add('hidden');
+                deletionPendingBanner.classList.add('hidden'); // Hide banner during logout
                 loadingIndicator.classList.remove('hidden');
                 loadingTextSpan.textContent = 'Logging out...'; // Change text for logout
 
@@ -258,15 +283,15 @@
                 if (event === 'SIGNED_OUT' || !session) {
                     console.log('User signed out or session expired. Redirecting to signin page.');
                     showMessage('Your session has ended. Redirecting to sign in.', 'error', messageArea);
-                    // Ensure content is hidden and spinner is shown before redirecting
+                    // Ensure content and banner are hidden and spinner is shown before redirecting
                     accountContent.classList.add('hidden');
+                    deletionPendingBanner.classList.add('hidden');
                     loadingIndicator.classList.remove('hidden');
-                    loadingTextSpan.textContent = 'Redirecting to sign in...'; // Change text for redirect
+                    loadingTextSpan.textContent = 'Redirecting to sign in...';
                     setTimeout(() => {
                         window.location.href = 'signin.html';
                     }, 1500);
                 } else if (event === 'SIGNED_IN') {
-                    // If signed in, re-run the check to display user data and hide spinner
                     checkSessionAndDisplayUser();
                 }
             });

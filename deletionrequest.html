@@ -92,7 +92,7 @@
             />
             <div class="flex items-center justify-start mt-4">
                 <input type="checkbox" id="confirm-deletion-checkbox" class="mr-2" required>
-                <label for="confirm-deletion-checkbox" class="text-sm text-gray-700">By checking this box, You understand that your account will be deleted and CANNOT be restored.</label>
+                <label for="confirm-deletion-checkbox" class="text-sm text-gray-700">I understand that deleting my account is permanent and irreversible. (Placeholder text)</label>
             </div>
             <button
                 id="verify-button"
@@ -288,9 +288,10 @@
                     loadingTextSpan.textContent = 'Requesting deletion...';
 
                     // Step 2: Add request to deletion_requests table
+                    // Changed column name from 'user_email' to 'user_email_address'
                     const { error: insertError } = await supabaseClient
                         .from('deletion_requests')
-                        .insert([{ user_email: signInData.user.email }]);
+                        .insert([{ user_email_address: signInData.user.email }]);
 
                     if (insertError) {
                         console.error('Error inserting deletion request:', insertError.message);

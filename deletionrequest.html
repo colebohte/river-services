@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Account for Deletion</title>
+    <link rel="icon" type="image/x-icon" href="favi.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            background: url("bg.jpg");
+            background-size: cover;
+            background-position: center;
+        }
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        .hidden {
+            display: none;
+        }
+        /* Spinner Styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px auto; /* Center the spinner and add some space */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Account Deletion Request</h1>
+        <p class="text-gray-700 mb-6">Please verify your account details to proceed with the deletion request. This step ensures only you can request deletion of your account.</p>
+
+        <!-- Loading Indicator with Spinner -->
+        <div id="loading-indicator" class="text-gray-600 text-lg mb-4 hidden">
+            <div class="spinner"></div>
+            <span id="loading-text">Loading...</span>
+        </div>
+
+        <!-- Verification Form (initially hidden) -->
+        <form id="verification-form" class="space-y-4 hidden">
+            <input
+                type="email"
+                id="verify-email"
+                placeholder="Email"
+                class="w-full px-4 py-2 border rounded"
+                autocomplete="off"
+                required
+            />
+            <input
+                type="password"
+                id="verify-password"
+                placeholder="Password"
+                class="w-full px-4 py-2 border rounded"
+                autocomplete="off"
+                required
+            />
+            <div class="flex items-center justify-start mt-4">
+                <input type="checkbox" id="confirm-deletion-checkbox" class="mr-2" required>
+                <label for="confirm-deletion-checkbox" class="text-sm text-gray-700">By checking this box, You understand that your account will be deleted and CANNOT be restored.</label>
+            </div>
+            <button
+                id="verify-button"
+                type="submit"
+                class="w-full bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200"
+            >
+                Verify and Request Deletion
+            </button>
+        </form>
+
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+        
+        <a href="account.html"><button class="w-full bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200 mt-4">Back to Account</button></a>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // !!! IMPORTANT SUPABASE CONFIGURATION !!!
+            // These values MUST match your Supabase project's API settings exactly.
+            // Go to your Supabase Dashboard -> Project Settings -> API.
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // Your Project URL
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // Your project's anon public key
+
+            let supabaseClient;
+            const messageArea = document.getElementById('message-area');
+            const verificationForm = document.getElementById('verification-form');
+            const verifyEmailInput = document.getElementById('verify-email');
+            const verifyPasswordInput = document.getElementById('verify-password');
+            const confirmDeletionCheckbox = document.getElementById('confirm-deletion-checkbox');
+            const verifyButton = document.getElementById('verify-button');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const loadingTextSpan = document.getElementById('loading-text');
+
+            /**
+             * Displays a message to the user in the message area.
+             * @param {string} text - The message text.
+             * @param {'success' | 'error' | 'info'} type - The type of message (determines styling).
+             */
+            function showMessage(text, type) {
+                console.log(`${type.toUpperCase()}: ${text}`);
+                if (messageArea) {
+                    messageArea.textContent = text;
+                    messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
+                        type === 'success'
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : type === 'error'
+                            ? 'bg-red-100 text-red-800 border border-red-300'
+                            : 'bg-blue-100 text-blue-800 border border-blue-300'
+                    }`;
+                    messageArea.classList.remove('hidden');
+                    setTimeout(() => {
+                        messageArea.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    console.error('Message area not found, cannot display message:', text);
+                }
+            }
+
+            /**
+             * Helper function to set loading state for buttons.
+             * @param {boolean} loading - True to set loading state, false to reset.
+             * @param {HTMLElement} buttonElement - The button element to modify.
+             * @param {string} originalText - The original text of the button.
+             * @param {string} loadingText - The text to display when loading.
+             */
+            function setButtonLoading(loading, buttonElement, originalText, loadingText) {
+                buttonElement.disabled = loading;
+                buttonElement.textContent = loading ? loadingText : originalText;
+            }
+
+            try {
+                // Initially hide the form and show the loading indicator
+                verificationForm.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Initializing...';
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                let SupabaseLib = null;
+                if (typeof supabase !== 'undefined') {
+                    SupabaseLib = supabase;
+                } else if (typeof Supabase !== 'undefined') {
+                    SupabaseLib = Supabase;
+                } else if (window.supabase) {
+                    SupabaseLib = window.supabase;
+                } else if (window.Supabase) {
+                    SupabaseLib = window.Supabase;
+                }
+
+                if (!SupabaseLib || !SupabaseLib.createClient) {
+                    throw new Error('Supabase library failed to load properly');
+                }
+
+                supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized successfully on deletionverification page');
+
+            } catch (error) {
+                console.error('Supabase initialization failed:', error);
+                showMessage(`Authentication system unavailable: ${error.message}`, 'error');
+                // Hide loading indicator and show form on error
+                loadingIndicator.classList.add('hidden');
+                verificationForm.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Ready'; // Reset text
+                return;
+            }
+
+            // Check for existing session on page load
+            async function checkExistingSession() {
+                console.log('Checking for existing session on deletionverification page...');
+                loadingTextSpan.textContent = 'Checking session...';
+
+                try {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+                    if (userError || !user) {
+                        console.error('No active session or user found:', userError || 'User object null');
+                        // If no session, show the verification form
+                        loadingIndicator.classList.add('hidden');
+                        verificationForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Please verify your account.';
+                    } else {
+                        console.log('User session active. User:', user);
+                        // If session is active, pre-fill email and show form
+                        verifyEmailInput.value = user.email;
+                        loadingIndicator.classList.add('hidden');
+                        verificationForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Ready to verify.';
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during session check:', err);
+                    showMessage('An unexpected error occurred during session check. Please try again.', 'error');
+                    loadingIndicator.classList.add('hidden');
+                    verificationForm.classList.remove('hidden');
+                    loadingTextSpan.textContent = 'Error loading.';
+                }
+            }
+
+            checkExistingSession();
+
+            // Handle form submission
+            verificationForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('Verification form submitted.');
+
+                const email = verifyEmailInput.value.trim();
+                const password = verifyPasswordInput.value;
+                const confirmed = confirmDeletionCheckbox.checked;
+
+                if (!email || !password) {
+                    showMessage('Please enter both email and password.', 'error');
+                    return;
+                }
+                if (!confirmed) {
+                    showMessage('You must tick the checkbox to confirm.', 'error');
+                    return;
+                }
+
+                setButtonLoading(true, verifyButton, 'Verify and Request Deletion', 'Verifying...');
+                verificationForm.classList.add('hidden');
+                loadingIndicator.classList.remove('hidden');
+                loadingTextSpan.textContent = 'Verifying account...';
+
+                try {
+                    // Step 1: Verify user's credentials by attempting to sign them in
+                    const { data: signInData, error: signInError } = await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                    if (signInError) {
+                        console.error('Sign-in verification failed:', signInError.message);
+                        showMessage(`Verification failed: ${signInError.message}. Please check your credentials.`, 'error');
+                        loadingIndicator.classList.add('hidden');
+                        verificationForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Verification failed.';
+                        setButtonLoading(false, verifyButton, 'Verify and Request Deletion', 'Verifying...');
+                        return;
+                    }
+
+                    if (!signInData.user) {
+                        console.error('Sign-in verification returned no user.');
+                        showMessage('Verification failed: No user found. Please try again.', 'error');
+                        loadingIndicator.classList.add('hidden');
+                        verificationForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Verification failed.';
+                        setButtonLoading(false, verifyButton, 'Verify and Request Deletion', 'Verifying...');
+                        return;
+                    }
+
+                    console.log('Account verified. Proceeding with deletion request.');
+                    loadingTextSpan.textContent = 'Requesting deletion...';
+
+                    // Step 2: Add request to deletion_requests table
+                    const { error: insertError } = await supabaseClient
+                        .from('deletion_requests')
+                        .insert([{ user_email: signInData.user.email }]);
+
+                    if (insertError) {
+                        console.error('Error inserting deletion request:', insertError.message);
+                        showMessage(`Failed to submit deletion request: ${insertError.message}. Please try again.`, 'error');
+                        loadingIndicator.classList.add('hidden');
+                        verificationForm.classList.remove('hidden');
+                        loadingTextSpan.textContent = 'Request failed.';
+                    } else {
+                        console.log('Deletion request submitted successfully for:', signInData.user.email);
+                        showMessage('Your account deletion request has been submitted. You will receive an email confirmation shortly.', 'success');
+                        loadingTextSpan.textContent = 'Request submitted!';
+                        // Optionally redirect after a delay
+                        setTimeout(() => {
+                            window.location.href = 'account.html'; // Redirect back to account page
+                        }, 3000);
+                    }
+
+                } catch (err) {
+                    console.error('An unexpected error occurred during deletion verification:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                    loadingIndicator.classList.add('hidden');
+                    verificationForm.classList.remove('hidden');
+                    loadingTextSpan.textContent = 'Error occurred.';
+                } finally {
+                    setButtonLoading(false, verifyButton, 'Verify and Request Deletion', 'Verifying...');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

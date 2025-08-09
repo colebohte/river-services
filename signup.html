@@ -1,206 +1,301 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create a River Account</title>
-  <link rel="icon" type="image/x-icon" href="favi.png">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-      /* Basic styling for Inter font and messages */
-      body {
-          font-family: 'Inter', sans-serif;
-          background: url("bg.jpg");
-      }
-      .container {
-         border-radius: 12px;
-      }
-      .message.success {
-          background-color: #d1fae5;
-          color: #065f46;
-          border: 1px solid #34d399;
-      }
-      .message.error {
-          background-color: #fee2e2;
-          color: #991b1b;
-          border: 1px solid #ef4444;
-      }
-      .hidden {
-          display: none;
-      }
-  </style>
-</head>
-<body class="bg-gray-100 flex items-center justify-center h-screen">
-  <div class="bg-white p-8 rounded shadow-md w-full max-w-sm" style="border-radius: 12px;">
-    <h1 class="text-2xl font-bold mb-6 text-center">Create a River Account</h1>
-    <form id="signup-form" class="space-y-4">
-      <input
-        type="email"
-        id="email"
-        placeholder="Email"
-        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        required
-      />
-      <input
-        type="text"
-        id="username"
-        placeholder="Username (max 32 chars, no spaces/caps/special chars)"
-        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        maxlength="32"
-        required
-      />
-      <input
-        type="password"
-        id="password"
-        placeholder="Password"
-        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        required
-      />
-      <input
-        type="password"
-        id="confirm-password"
-        placeholder="Confirm Password"
-        class="w-full px-4 py-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        required
-      />
-      <button
-        type="submit"
-        id="signup-button"
-        class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
-      >
-        Sign Up
-      </button>
-    </form>
-    <p class="text-sm text-gray-600 mt-4">
-        Have an account?
-        <a href="signin" class="text-indigo-600 hover:text-indigo-800 underline">Sign In</a>
-    </p>
-    <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://esm.sh/@supabase/supabase-js'
-
-    // ✅ Make sure your keys are actually correct here
-    const supabaseUrl = 'https://lmewabaqrhkxvpydrjjh.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // Get DOM elements
-    const form = document.getElementById('signup-form')
-    const emailInput = document.getElementById('email')
-    const usernameInput = document.getElementById('username')
-    const passwordInput = document.getElementById('password')
-    const confirmPasswordInput = document.getElementById('confirm-password')
-    const signupButton = document.getElementById('signup-button')
-    const messageArea = document.getElementById('message-area')
-
-    /**
-     * Displays a message to the user in the message area.
-     * @param {string} text - The message text.
-     * @param {'success' | 'error'} type - The type of message (determines styling).
-     */
-    function showMessage(text, type) {
-        console.log(`${type.toUpperCase()}: ${text}`);
-        messageArea.textContent = text;
-        messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left message ${type}`;
-        messageArea.classList.remove('hidden');
-
-        setTimeout(() => {
-            messageArea.classList.add('hidden');
-        }, 5000);
-    }
-
-    /**
-     * Sets the loading state for the signup button.
-     * @param {boolean} loading - True to show loading state, false otherwise.
-     */
-    function setButtonLoading(loading) {
-        signupButton.disabled = loading;
-        signupButton.textContent = loading ? 'Signing Up...' : 'Sign Up';
-    }
-
-    // Handle form submission
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault()
-      setButtonLoading(true); // Set button to loading state
-
-      const email = emailInput.value.trim()
-      const username = usernameInput.value.trim()
-      const password = passwordInput.value
-      const confirmPassword = confirmPasswordInput.value
-
-      // --- Validation Checks ---
-      if (password !== confirmPassword) {
-        showMessage('Passwords do not match.', 'error');
-        setButtonLoading(false);
-        return;
-      }
-
-      if (username.length === 0) {
-        showMessage('Username cannot be empty.', 'error');
-        setButtonLoading(false);
-        return;
-      }
-
-      if (username.length > 32) {
-        showMessage('Username cannot exceed 32 characters.', 'error');
-        setButtonLoading(false);
-        return;
-      }
-
-      if (username.includes(' ')) {
-        showMessage('Username cannot contain spaces.', 'error');
-        setButtonLoading(false);
-        return;
-      }
-
-      if (username !== username.toLowerCase()) {
-        showMessage('Username cannot contain capital letters.', 'error');
-        setButtonLoading(false);
-        return;
-      }
-
-      // New validation: Check for special characters
-      const alphanumericRegex = /^[a-z0-9]+$/; // Only lowercase letters and numbers
-      if (!alphanumericRegex.test(username)) {
-        showMessage('Username can only contain lowercase letters and numbers (no special characters).', 'error');
-        setButtonLoading(false);
-        return;
-      }
-      // --- End Validation Checks ---
-
-      try {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              username: username,
-              display_name: username
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create River Account</title>
+    <link rel="icon" type="image/x-icon" href="favi.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                    }
+                }
             }
-            // Removed emailRedirectTo - let Supabase handle default redirect
-          }
-        })
-
-        if (error) {
-          console.error('Sign up error:', error.message);
-          showMessage(error.message, 'error');
-        } else {
-          showMessage('Sign up successful! Check your email and click the confirmation link. Make sure to check spam folder too!', 'success');
-          // Clear form fields after successful signup
-          emailInput.value = '';
-          usernameInput.value = '';
-          passwordInput.value = '';
-          confirmPasswordInput.value = '';
         }
-      } catch (err) {
-          console.error('An unexpected error occurred during sign up:', err);
-          showMessage('An unexpected error occurred during sign up.', 'error');
-      } finally {
-          setButtonLoading(false); // Reset button state
-      }
-    })
-  </script>
+    </script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            background: url("bg.jpg");
+            background-size: cover;
+            background-position: center;
+        }
+        /* General styling for message area */
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
+        /* Spinner Styles */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+        <h1 class="text-3xl font-bold mb-6 text-gray-800">Create Account</h1>
+
+        <div id="message-area" class="message hidden"></div>
+
+        <!-- Google Sign-up Button -->
+        <button
+            id="google-signup-button"
+            class="w-full flex items-center justify-center space-x-3 bg-white text-gray-700 py-3 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition duration-200 shadow-sm"
+        >
+            <img src="Google_Favicon_2025.svg" alt="Google Logo" class="w-5 h-5 mr-3" />
+            <span>Sign Up with Google</span>
+        </button>
+
+        <div class="relative flex items-center justify-center my-4">
+            <div class="absolute inset-x-0 h-px bg-gray-300"></div>
+            <span class="relative z-10 bg-white px-4 text-sm text-gray-500">Or</span>
+        </div>
+
+        <form id="signup-form" class="space-y-4">
+            <input
+                type="email"
+                id="signup-email"
+                placeholder="Email"
+                class="w-full px-4 py-2 border rounded"
+                autocomplete="off"
+                required
+            />
+            <input
+                type="password"
+                id="signup-password"
+                placeholder="Password"
+                class="w-full px-4 py-2 border rounded"
+                autocomplete="off"
+                required
+            />
+            <input
+                type="password"
+                id="confirm-password"
+                placeholder="Confirm Password"
+                class="w-full px-4 py-2 border rounded"
+                autocomplete="off"
+                required
+            />
+            <button
+                id="signup-button"
+                type="submit"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
+            >
+                Sign Up
+            </button>
+        </form>
+        
+        <p class="text-gray-700 mt-4">Already have an account? <a href="signin.html" class="text-blue-600 hover:underline">Sign In</a></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // !!! IMPORTANT SUPABASE CONFIGURATION !!!
+            // These values MUST match your Supabase project's API settings exactly.
+            // Go to your Supabase Dashboard -> Project Settings -> API.
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // Your Project URL
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // Your project's anon public key
+
+            const REDIRECT_AFTER_SIGNUP = 'account.html';
+
+            let supabaseClient;
+            const signupForm = document.getElementById('signup-form');
+            const signupEmailInput = document.getElementById('signup-email');
+            const signupPasswordInput = document.getElementById('signup-password');
+            const confirmPasswordInput = document.getElementById('confirm-password');
+            const signupButton = document.getElementById('signup-button');
+            const googleSignupButton = document.getElementById('google-signup-button');
+            const messageArea = document.getElementById('message-area');
+
+            /**
+             * Displays a message to the user in the message area.
+             * @param {string} text - The message text.
+             * @param {'success' | 'error' | 'info'} type - The type of message (determines styling).
+             */
+            function showMessage(text, type) {
+                console.log(`${type.toUpperCase()}: ${text}`);
+                if (messageArea) {
+                    messageArea.textContent = text;
+                    messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
+                        type === 'success'
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : type === 'error'
+                            ? 'bg-red-100 text-red-800 border border-red-300'
+                            : 'bg-blue-100 text-blue-800 border border-blue-300'
+                    }`;
+                    messageArea.classList.remove('hidden');
+                    setTimeout(() => {
+                        messageArea.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    console.error('Message area not found, cannot display message:', text);
+                }
+            }
+
+            /**
+             * Helper function to set loading state for buttons.
+             * @param {boolean} loading - True to set loading state, false to reset.
+             * @param {HTMLElement} buttonElement - The button element to modify.
+             * @param {string} originalText - The original text of the button.
+             * @param {string} loadingText - The text to display when loading.
+             */
+            function setButtonLoading(loading, buttonElement, originalText, loadingText) {
+                buttonElement.disabled = loading;
+                buttonElement.textContent = loading ? loadingText : originalText;
+                if (loading) {
+                    buttonElement.classList.add('flex', 'items-center', 'justify-center');
+                    buttonElement.innerHTML = `<div class="spinner w-5 h-5 mr-3"></div> <span>${loadingText}</span>`;
+                } else {
+                    buttonElement.classList.remove('flex', 'items-center', 'justify-center');
+                    buttonElement.textContent = originalText;
+                }
+            }
+
+            try {
+                let SupabaseLib = null;
+                if (typeof supabase !== 'undefined') {
+                    SupabaseLib = supabase;
+                } else if (typeof Supabase !== 'undefined') {
+                    SupabaseLib = Supabase;
+                } else if (window.supabase) {
+                    SupabaseLib = window.supabase;
+                } else if (window.Supabase) {
+                    SupabaseLib = window.Supabase;
+                }
+
+                if (!SupabaseLib || !SupabaseLib.createClient) {
+                    throw new Error('Supabase library failed to load properly');
+                }
+
+                supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized successfully on signup page');
+            } catch (error) {
+                console.error('Supabase initialization failed:', error);
+                showMessage(`Authentication system unavailable: ${error.message}`, 'error');
+                return;
+            }
+
+            // Check for existing session and redirect if found
+            async function checkExistingSession() {
+                try {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+                    if (userError || !user) {
+                        console.log('No active session found. Displaying sign-up form.');
+                        return;
+                    }
+
+                    console.log('Valid user session found, redirecting to account page.');
+                    showMessage('Already signed in! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = REDIRECT_AFTER_SIGNUP;
+                    }, 1000);
+                } catch (err) {
+                    console.error('An unexpected error occurred during session check:', err);
+                    showMessage('An unexpected error occurred during session check. Please try again.', 'error');
+                }
+            }
+            checkExistingSession();
+
+            // Handle email/password sign-up form submission
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('Email/password sign-up form submitted.');
+
+                const email = signupEmailInput.value;
+                const password = signupPasswordInput.value;
+                const confirmPassword = confirmPasswordInput.value;
+
+                if (password !== confirmPassword) {
+                    showMessage('Passwords do not match. Please try again.', 'error');
+                    return;
+                }
+
+                setButtonLoading(true, signupButton, 'Sign Up', 'Creating Account...');
+
+                try {
+                    const { data, error } = await supabaseClient.auth.signUp({
+                        email,
+                        password
+                    });
+
+                    if (error) {
+                        console.error('Sign up failed:', error.message);
+                        showMessage(`Sign up failed: ${error.message}`, 'error');
+                        setButtonLoading(false, signupButton, 'Sign Up', 'Creating Account...');
+                        return;
+                    }
+
+                    if (data.user) {
+                        console.log('Sign up successful:', data.user);
+                        showMessage('Sign up successful! Please check your email to confirm your account.', 'success');
+                        setTimeout(() => {
+                            window.location.href = 'signin.html';
+                        }, 5000);
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during sign-up:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                } finally {
+                    setButtonLoading(false, signupButton, 'Sign Up', 'Creating Account...');
+                }
+            });
+
+            // Handle Google sign-up button click
+            googleSignupButton.addEventListener('click', async () => {
+                console.log('Google sign-up button clicked.');
+                setButtonLoading(true, googleSignupButton, 'Sign Up with Google', 'Creating Account...');
+                
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + '/account.html',
+                        },
+                    });
+
+                    if (error) {
+                        console.error('Google sign-up failed:', error.message);
+                        showMessage(`Google sign-up failed: ${error.message}. Please try again.`, 'error');
+                        setButtonLoading(false, googleSignupButton, 'Sign Up with Google', 'Creating Account...');
+                    }
+                    // The page will be redirected automatically by Supabase on success.
+                } catch (err) {
+                    console.error('An unexpected error occurred during Google sign-up:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                    setButtonLoading(false, googleSignupButton, 'Sign Up with Google', 'Creating Account...');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

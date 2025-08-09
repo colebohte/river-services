@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In to River Account</title>
+    <link rel="icon" type="image/x-icon" href="favi.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -24,7 +25,24 @@
             background-size: cover;
             background-position: center;
         }
-        /* Spinner Styles */
+        /* General styling for message area */
+        .message {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            text-align: left;
+        }
+        .message.success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .message.error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #ef4444;
+        }
         .spinner {
             border: 4px solid rgba(0, 0, 0, 0.1);
             border-left-color: #3b82f6; /* Tailwind blue-500 */
@@ -32,7 +50,6 @@
             width: 30px;
             height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px auto; /* Center the spinner and add some space */
         }
 
         @keyframes spin {
@@ -42,17 +59,39 @@
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
 
-        <!-- Loading Indicator with Spinner -->
-        <div id="loading-indicator" class="text-gray-600 text-lg mb-4 hidden">
-            <div class="spinner"></div>
-            <span id="loading-text">Loading...</span>
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+        
+        <!-- Google Sign-In Button -->
+        <button
+            id="google-signin-button"
+            class="w-full flex items-center justify-center space-x-3 bg-white text-gray-700 py-3 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition duration-200 shadow-sm"
+        >
+            <svg class="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5Z" fill="#EA4335"/>
+                <path d="M4.29828 14.1593C4.05315 14.9493 3.92138 15.7533 3.92138 16.5C3.92138 17.2467 4.05315 18.0507 4.29828 18.8407L10.0227 23.2528C9.55393 21.8493 9.33649 20.3541 9.33649 18.5C9.33649 16.6459 9.55393 15.1507 10.0227 13.7472L4.29828 14.1593Z" fill="#FBBC05"/>
+                <path d="M24 40.5C18.1963 40.5 12.9685 37.9432 8.90892 33.8836L3.92138 38.9683C7.99446 43.1491 15.5348 46 24 46C31.5434 46 37.9959 42.4283 42.0729 36.438L36.3155 31.2589C32.9691 35.8078 28.1633 38.5 24 38.5C17.3828 38.5 11.6624 34.3066 10.0227 29.4286L4.29828 25.0165C8.01639 32.3386 15.4674 37.1759 24 37.1759C29.8037 37.1759 35.0315 34.6291 39.0911 30.5695L44.162 35.6405C40.0963 39.7118 35.1549 42.5 29.8037 42.5C26.5492 42.5 23.5134 41.7483 20.7303 40.2319L15.3411 37.386L10.0227 29.4286L4.29828 25.0165L3.92138 18.8407L10.0227 23.2528L15.3411 20.407L20.7303 23.2528L24 25L28.2573 22.1558L34.0202 18.5714L39.0911 13.6873L44.162 18.7583L39.0911 23.8292L36.3155 26.6853L32.9691 29.4286L28.2573 25.0165L24 23.2528L19.6705 20.407L15.3411 18.5714L10.0227 16.7358L4.29828 14.1593Z" fill="#34A853"/>
+                <path d="M24.0001 24.5C21.75 24.5 19.5 23.5 17.5 21.5L15.3411 18.5714L10.0227 16.7358C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593Z" fill="#4285F4"/>
+                <path d="M24 2C19.808 2 15.932 3.1973 12.636 5.2536L18.337 9.8778C19.988 9.076 21.905 8.6164 24 8.6164C28.5303 8.6164 32.2222 10.5901 34.616 13.8828L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2Z" fill="#C5221F"/>
+                <path d="M24 46C29.8037 46 35.0315 43.4432 39.0911 39.3836L34.0202 34.3127C31.4206 36.9123 27.9701 38.5 24 38.5C17.3828 38.5 11.6624 34.3066 10.0227 29.4286L4.29828 33.8836C8.90892 37.9432 15.4674 40.5 24 40.5C29.8037 40.5 35.0315 37.9432 39.0911 33.8836L34.0202 28.8127C31.4206 31.4123 27.9701 33 24 33C17.3828 33 11.6624 28.8066 10.0227 23.9286L4.29828 28.3407C8.01639 35.6627 15.4674 40.5 24 40.5C29.8037 40.5 35.0315 37.9432 39.0911 33.8836L34.0202 28.8127C31.4206 31.4123 27.9701 33 24 33C17.3828 33 11.6624 28.8066 10.0227 23.9286L4.29828 28.3407C8.01639 35.6627 15.4674 40.5 24 40.5Z" fill="#34A853"/>
+                <path d="M4.29828 14.1593L10.0227 18.5714C9.55393 21.8493 9.33649 20.3541 9.33649 18.5C9.33649 16.6459 9.55393 15.1507 10.0227 13.7472L4.29828 14.1593Z" fill="#FBBC05"/>
+                <path d="M24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5Z" fill="#EA4335"/>
+                <path d="M24.0001 24.5C21.75 24.5 19.5 23.5 17.5 21.5L15.3411 18.5714L10.0227 16.7358C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593L10.0227 18.5714C11.6624 13.6934 17.3828 9.5 24 9.5C27.9701 9.5 31.4206 11.0877 34.0202 13.6873L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2C15.4674 2 8.01639 6.83733 4.29828 14.1593Z" fill="#4285F4"/>
+                <path d="M24 2C19.808 2 15.932 3.1973 12.636 5.2536L18.337 9.8778C19.988 9.076 21.905 8.6164 24 8.6164C28.5303 8.6164 32.2222 10.5901 34.616 13.8828L39.0911 8.61639C35.0315 4.55681 29.8037 2 24 2Z" fill="#C5221F"/>
+                <path d="M24 46C29.8037 46 35.0315 43.4432 39.0911 39.3836L34.0202 34.3127C31.4206 36.9123 27.9701 38.5 24 38.5C17.3828 38.5 11.6624 34.3066 10.0227 29.4286L4.29828 33.8836C8.90892 37.9432 15.4674 40.5 24 40.5C29.8037 40.5 35.0315 37.9432 39.0911 33.8836L34.0202 28.8127C31.4206 31.4123 27.9701 33 24 33C17.3828 33 11.6624 28.8066 10.0227 23.9286L4.29828 28.3407C8.01639 35.6627 15.4674 40.5 24 40.5C29.8037 40.5 35.0315 37.9432 39.0911 33.8836L34.0202 28.8127C31.4206 31.4123 27.9701 33 24 33C17.3828 33 11.6624 28.8066 10.0227 23.9286L4.29828 28.3407C8.01639 35.6627 15.4674 40.5 24 40.5Z" fill="#34A853"/>
+                <path d="M4.29828 14.1593L10.0227 18.5714C9.55393 21.8493 9.33649 20.3541 9.33649 18.5C9.33649 16.6459 9.55393 15.1507 10.0227 13.7472L4.29828 14.1593Z" fill="#FBBC05"/>
+            </svg>
+            <span>Sign In with Google</span>
+        </button>
+
+        <div class="relative flex items-center justify-center my-4">
+            <div class="absolute inset-x-0 h-px bg-gray-300"></div>
+            <span class="relative z-10 bg-white px-4 text-sm text-gray-500">Or</span>
         </div>
 
-        <!-- Sign In Form (initially hidden) -->
-        <form id="signin-form" class="space-y-4 hidden">
+        <form id="signin-form" class="space-y-4">
             <input
                 type="email"
                 id="signin-email"
@@ -72,30 +111,16 @@
             <button
                 id="signin-button"
                 type="submit"
-                class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
             >
                 Sign In
             </button>
         </form>
-
-        <!-- Links Section (initially hidden, shown with form) -->
-        <div id="signin-links" class="hidden">
-            <p class="text-sm text-gray-600 mt-4">
-                <a href="magic.html" class="text-indigo-600 hover:text-indigo-800 underline">Passwordless login</a>
-            </p>
-            <p class="text-sm text-gray-600 mt-4">
-                <a href="forgot-password.html" class="text-indigo-600 hover:text-indigo-800 underline">Forgot Password?</a>
-            </p>
-            <p class="text-sm text-gray-600 mt-4">
-                Don't have an account?
-                <a href="signup.html" class="text-indigo-600 hover:text-indigo-800 underline">Sign Up</a>
-            </p>
-        </div>
-        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
+        
+        <p class="text-gray-700 mt-4">Don't have an account? <a href="signup.html" class="text-blue-600 hover:underline">Sign Up</a></p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             // !!! IMPORTANT SUPABASE CONFIGURATION !!!
@@ -104,40 +129,33 @@
             const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // Your Project URL
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // Your project's anon public key
 
-            // The URL where Supabase will redirect the user AFTER successful sign-in.
-            // This URL MUST be added to your Supabase Project Dashboard under:
-            // Authentication -> Settings -> "Site URL" (e.g., https://colebohte.github.io)
-            // AND "Redirect URLs" (e.g., https://colebohte.github.io/river-services/account.html)
-            const REDIRECT_AFTER_SIGNIN = 'https://accounts.rivergames.ca/account';
-
+            const REDIRECT_AFTER_SIGNIN = 'account.html';
 
             let supabaseClient;
-            const messageArea = document.getElementById('message-area');
             const signinForm = document.getElementById('signin-form');
             const signinEmailInput = document.getElementById('signin-email');
             const signinPasswordInput = document.getElementById('signin-password');
             const signinButton = document.getElementById('signin-button');
-            const loadingIndicator = document.getElementById('loading-indicator'); // Reference to loading spinner container
-            const loadingTextSpan = document.getElementById('loading-text'); // Reference to the text inside loading indicator
-            const signinLinks = document.getElementById('signin-links'); // Reference to the links container
-
+            const googleSigninButton = document.getElementById('google-signin-button');
+            const messageArea = document.getElementById('message-area');
 
             /**
              * Displays a message to the user in the message area.
              * @param {string} text - The message text.
-             * @param {'success' | 'error'} type - The type of message (determines styling).
+             * @param {'success' | 'error' | 'info'} type - The type of message (determines styling).
              */
             function showMessage(text, type) {
                 console.log(`${type.toUpperCase()}: ${text}`);
                 if (messageArea) {
                     messageArea.textContent = text;
-                    messageArea.className = `mt-6 p-4 rounded-xl text-sm font-medium ${
+                    messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
                         type === 'success'
-                            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
-                            : 'bg-red-50 text-red-800 border border-red-200'
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : type === 'error'
+                            ? 'bg-red-100 text-red-800 border border-red-300'
+                            : 'bg-blue-100 text-blue-800 border border-blue-300'
                     }`;
                     messageArea.classList.remove('hidden');
-
                     setTimeout(() => {
                         messageArea.classList.add('hidden');
                     }, 5000);
@@ -146,15 +164,26 @@
                 }
             }
 
+            /**
+             * Helper function to set loading state for buttons.
+             * @param {boolean} loading - True to set loading state, false to reset.
+             * @param {HTMLElement} buttonElement - The button element to modify.
+             * @param {string} originalText - The original text of the button.
+             * @param {string} loadingText - The text to display when loading.
+             */
+            function setButtonLoading(loading, buttonElement, originalText, loadingText) {
+                buttonElement.disabled = loading;
+                buttonElement.textContent = loading ? loadingText : originalText;
+                if (loading) {
+                    buttonElement.classList.add('flex', 'items-center', 'justify-center');
+                    buttonElement.innerHTML = `<div class="spinner w-5 h-5 mr-3"></div> <span>${loadingText}</span>`;
+                } else {
+                    buttonElement.classList.remove('flex', 'items-center', 'justify-center');
+                    buttonElement.textContent = originalText;
+                }
+            }
+
             try {
-                // Initially hide the form and links, show the loading indicator
-                signinForm.classList.add('hidden');
-                signinLinks.classList.add('hidden'); // Hide links
-                loadingIndicator.classList.remove('hidden');
-                loadingTextSpan.textContent = 'Initializing...'; // Initial loading text
-
-                await new Promise(resolve => setTimeout(resolve, 500));
-
                 let SupabaseLib = null;
                 if (typeof supabase !== 'undefined') {
                     SupabaseLib = supabase;
@@ -172,46 +201,43 @@
 
                 supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 console.log('Supabase client initialized successfully on signin page');
-
             } catch (error) {
                 console.error('Supabase initialization failed:', error);
                 showMessage(`Authentication system unavailable: ${error.message}`, 'error');
-                // Hide loading indicator even on error, and show form and links
-                loadingIndicator.classList.add('hidden');
-                signinForm.classList.remove('hidden');
-                signinLinks.classList.remove('hidden'); // Show links on error
-                loadingTextSpan.textContent = 'Loading...'; // Reset text
                 return;
             }
 
+            // Check for existing session and redirect if found
+            async function checkExistingSession() {
+                try {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
 
-            function setButtonLoading(loading) {
-                signinButton.disabled = loading;
-                signinButton.textContent = loading ? 'Signing In...' : 'Sign In';
+                    if (userError || !user) {
+                        console.log('No active session found. Displaying sign-in form.');
+                        return;
+                    }
+
+                    console.log('Valid user session found, redirecting to account page.');
+                    showMessage('Already signed in! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = REDIRECT_AFTER_SIGNIN;
+                    }, 1000);
+                } catch (err) {
+                    console.error('An unexpected error occurred during session check:', err);
+                    showMessage('An unexpected error occurred during session check. Please try again.', 'error');
+                }
             }
+            checkExistingSession();
 
-            // Handle form submission
+            // Handle email/password sign-in form submission
             signinForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                console.log('Sign In form submitted. Preventing default behavior.');
+                console.log('Email/password sign-in form submitted.');
 
-                const email = signinEmailInput.value.trim();
+                const email = signinEmailInput.value;
                 const password = signinPasswordInput.value;
 
-                if (!email || !password) {
-                    showMessage('Please enter both email and password', 'error');
-                    console.log('Validation failed: Email or password missing.');
-                    return;
-                }
-
-                setButtonLoading(true);
-                // Show loading spinner and hide form and links
-                signinForm.classList.add('hidden');
-                signinLinks.classList.add('hidden'); // Hide links
-                loadingIndicator.classList.remove('hidden');
-                loadingTextSpan.textContent = 'Signing in...';
-
-                console.log('Attempting to sign in with email:', email);
+                setButtonLoading(true, signinButton, 'Sign In', 'Signing In...');
 
                 try {
                     const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -220,114 +246,52 @@
                     });
 
                     if (error) {
-                        console.error('Sign in API error:', error);
-                        showMessage(error.message, 'error');
-                        // Hide loading spinner and show form and links again on error
-                        loadingIndicator.classList.add('hidden');
-                        signinForm.classList.remove('hidden');
-                        signinLinks.classList.remove('hidden'); // Show links
-                        loadingTextSpan.textContent = 'Loading...'; // Reset text
-                    } else if (data.user) {
-                        console.log('Sign in successful! User data:', data.user);
-                        showMessage('Signed in successfully! Redirecting...', 'success');
-                        loadingTextSpan.textContent = 'Redirecting...'; // Change text for redirect
-
-                        // Clear form (no need to re-show form as it's redirecting)
-                        signinEmailInput.value = '';
-                        signinPasswordInput.value = '';
-
-                        // Redirect after delay
-                        setTimeout(() => {
-                            console.log(`Redirecting to ${REDIRECT_AFTER_SIGNIN}...`);
-                            window.location.href = REDIRECT_AFTER_SIGNIN;
-                        }, 1500);
-                    } else {
-                        console.warn('Sign in API returned no error but also no user data. This is unexpected.', data);
-                        showMessage('Sign in failed. Please check your credentials.', 'error');
-                        // Hide loading spinner and show form and links again on unexpected state
-                        loadingIndicator.classList.add('hidden');
-                        signinForm.classList.remove('hidden');
-                        signinLinks.classList.remove('hidden'); // Show links
-                        loadingTextSpan.textContent = 'Loading...'; // Reset text
-                    }
-                } catch (err) {
-                    console.error('Unexpected error during sign in process:', err);
-                    showMessage('An unexpected error occurred during sign in.', 'error');
-                    // Hide loading spinner and show form and links on unexpected error
-                    loadingIndicator.classList.add('hidden');
-                    signinForm.classList.remove('hidden');
-                    signinLinks.classList.remove('hidden'); // Show links
-                    loadingTextSpan.textContent = 'Loading...'; // Reset text
-                } finally {
-                    setButtonLoading(false);
-                    console.log('Sign in process completed (or failed). Button loading state reset.');
-                }
-            });
-
-            // Check for existing session on page load
-            async function checkExistingSession() {
-                console.log('Checking for existing session on signin page...');
-                loadingTextSpan.textContent = 'Checking session...'; // Update text for session check
-
-                try {
-                    const { data: { session }, error: getSessionError } = await supabaseClient.auth.getSession();
-
-                    if (getSessionError) {
-                        console.error('Error getting initial session:', getSessionError);
-                        console.log('No valid session found due to error. Displaying sign-in form.');
-                        await supabaseClient.auth.signOut(); // Clear any potentially bad session
-                        // Hide loading spinner and show form and links
-                        loadingIndicator.classList.add('hidden');
-                        signinForm.classList.remove('hidden');
-                        signinLinks.classList.remove('hidden'); // Show links
-                        loadingTextSpan.textContent = 'Loading...'; // Reset text
+                        console.error('Sign in failed:', error.message);
+                        showMessage(`Sign in failed: ${error.message}`, 'error');
+                        setButtonLoading(false, signinButton, 'Sign In', 'Signing In...');
                         return;
                     }
 
-                    if (session) {
-                        console.log('Initial session found. Attempting to get user details from backend for robust check...');
-                        loadingTextSpan.textContent = 'Verifying user...'; // Update text for user verification
-                        const { data: { user }, error: getUserError } = await supabaseClient.auth.getUser();
-
-                        if (getUserError || !user) {
-                            console.error('Error getting user details or user not found on backend:', getUserError || 'User object is null/undefined');
-                            console.log('User account not found on backend or session invalid. Invalidating client session and staying on sign-in form.');
-                            await supabaseClient.auth.signOut(); // Explicitly clear client-side session
-                            showMessage('Your session is no longer valid or your account has been deleted. Please sign in again.', 'error');
-                            // Hide loading spinner and show form and links
-                            loadingIndicator.classList.add('hidden');
-                            signinForm.classList.remove('hidden');
-                            signinLinks.classList.remove('hidden'); // Show links
-                            loadingTextSpan.textContent = 'Loading...'; // Reset text
-                            return;
-                        }
-
-                        console.log('Valid user account found on backend with active session, redirecting to account page.');
-                        showMessage('Already signed in! Redirecting...', 'success');
-                        loadingTextSpan.textContent = 'Redirecting...'; // Change text for redirect
+                    if (data.user) {
+                        console.log('Sign in successful:', data.user);
+                        showMessage('Sign in successful! Redirecting...', 'success');
                         setTimeout(() => {
                             window.location.href = REDIRECT_AFTER_SIGNIN;
                         }, 1000);
-                    } else {
-                        console.log('No existing session found. Displaying sign-in form.');
-                        // Hide loading spinner and show form and links
-                        loadingIndicator.classList.add('hidden');
-                        signinForm.classList.remove('hidden');
-                        signinLinks.classList.remove('hidden'); // Show links
-                        loadingTextSpan.textContent = 'Loading...'; // Reset text
                     }
                 } catch (err) {
-                    console.error('An unexpected error occurred during session check or user fetch:', err);
-                    showMessage('An unexpected error occurred during session check. Please try again.', 'error');
-                    // Hide loading spinner and show form and links on unexpected error
-                    loadingIndicator.classList.add('hidden');
-                    signinForm.classList.remove('hidden');
-                    signinLinks.classList.remove('hidden'); // Show links
-                    loadingTextSpan.textContent = 'Loading...'; // Reset text
+                    console.error('An unexpected error occurred during sign-in:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                } finally {
+                    setButtonLoading(false, signinButton, 'Sign In', 'Signing In...');
                 }
-            }
+            });
 
-            checkExistingSession();
+            // Handle Google sign-in button click
+            googleSigninButton.addEventListener('click', async () => {
+                console.log('Google sign-in button clicked.');
+                setButtonLoading(true, googleSigninButton, 'Sign In with Google', 'Signing In...');
+                
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + '/account.html',
+                        },
+                    });
+
+                    if (error) {
+                        console.error('Google sign-in failed:', error.message);
+                        showMessage(`Google sign-in failed: ${error.message}. Please try again.`, 'error');
+                        setButtonLoading(false, googleSigninButton, 'Sign In with Google', 'Signing In...');
+                    }
+                    // The page will be redirected automatically by Supabase on success.
+                } catch (err) {
+                    console.error('An unexpected error occurred during Google sign-in:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                    setButtonLoading(false, googleSigninButton, 'Sign In with Google', 'Signing In...');
+                }
+            });
         });
     </script>
 </body>

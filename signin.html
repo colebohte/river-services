@@ -22,6 +22,8 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
             background: url("bg.jpg");
+            background-size: cover;
+            background-position: center;
         }
         /* General styling for message area */
         .message {
@@ -41,21 +43,47 @@
             color: #991b1b;
             border: 1px solid #ef4444;
         }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: #3b82f6; /* Tailwind blue-500 */
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-100 font-sans min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center" style="margin: 10px;">
         <h1 class="text-3xl font-bold mb-6 text-gray-800">Sign In</h1>
+
+        <div id="message-area" class="mt-4 p-3 rounded-lg text-sm text-left hidden"></div>
         
-        <!-- Message area for displaying feedback -->
-        <div id="message-area" class="message hidden"></div>
+        <!-- Google Sign-In Button -->
+        <button
+            id="google-signin-button"
+            class="w-full flex items-center justify-center space-x-3 bg-white text-gray-700 py-3 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 transition duration-200 shadow-sm"
+        >
+            <img src="Google_Favicon_2025.svg" alt="Google Logo" class="w-5 h-5 mr-3" />
+            <span>Sign In with Google</span>
+        </button>
+
+        <div class="relative flex items-center justify-center my-4">
+            <div class="absolute inset-x-0 h-px bg-gray-300"></div>
+            <span class="relative z-10 bg-white px-4 text-sm text-gray-500">Or</span>
+        </div>
 
         <form id="signin-form" class="space-y-4">
             <input
                 type="email"
                 id="signin-email"
                 placeholder="Email"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 border rounded"
                 autocomplete="off"
                 required
             />
@@ -63,66 +91,193 @@
                 type="password"
                 id="signin-password"
                 placeholder="Password"
-                class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="w-full px-4 py-2 border rounded"
+                autocomplete="off"
                 required
             />
             <button
-                type="submit"
                 id="signin-button"
-                class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition duration-300"
+                type="submit"
+                class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
             >
                 Sign In
             </button>
         </form>
-
-        <div class="mt-6 text-center text-gray-500">or</div>
-
-        <!-- Google Sign-in Button with your SVG -->
-        <button
-            id="google-signin-button"
-            class="w-full flex items-center justify-center bg-white border border-gray-300 text-gray-700 font-medium py-2 px-4 rounded-lg shadow-sm hover:bg-gray-100 transition duration-300 mt-4"
-        >
-            <img src="Google_Favicon_2025.svg" alt="Google Logo" class="w-5 h-5 mr-3" />
-            <span>Sign in with Google</span>
-        </button>
+        
+        <p class="text-gray-700 mt-4">Don't have an account? <a href="signup.html" class="text-blue-600 hover:underline">Sign Up</a></p>
     </div>
-    
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/dist/umd/supabase.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // !!! IMPORTANT SUPABASE CONFIGURATION !!!
+            // These values MUST match your Supabase project's API settings exactly.
+            // Go to your Supabase Dashboard -> Project Settings -> API.
+            const SUPABASE_URL = 'https://lmewabaqrhkxvpydrjjh.supabase.co'; // Your Project URL
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxtZXdhYmFxcmhreHZweWRyampoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgzOTY4MzAsImV4cCI6MjA2Mzk3MjgzMH0.8ClAfvkOqELoBa2lx-ylhStEJjg8KFVlA3IhF5CdSXE'; // Your project's anon public key
+
+            const REDIRECT_AFTER_SIGNIN = 'account.html';
+
+            let supabaseClient;
+            const signinForm = document.getElementById('signin-form');
+            const signinEmailInput = document.getElementById('signin-email');
+            const signinPasswordInput = document.getElementById('signin-password');
+            const signinButton = document.getElementById('signin-button');
             const googleSigninButton = document.getElementById('google-signin-button');
             const messageArea = document.getElementById('message-area');
 
-            // Function to display messages to the user
-            const showMessage = (message, type) => {
-                messageArea.textContent = message;
-                messageArea.className = `message ${type}`;
-                messageArea.classList.remove('hidden');
-            };
+            /**
+             * Displays a message to the user in the message area.
+             * @param {string} text - The message text.
+             * @param {'success' | 'error' | 'info'} type - The type of message (determines styling).
+             */
+            function showMessage(text, type) {
+                console.log(`${type.toUpperCase()}: ${text}`);
+                if (messageArea) {
+                    messageArea.textContent = text;
+                    messageArea.className = `mt-4 p-3 rounded-lg text-sm text-left ${
+                        type === 'success'
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : type === 'error'
+                            ? 'bg-red-100 text-red-800 border border-red-300'
+                            : 'bg-blue-100 text-blue-800 border border-blue-300'
+                    }`;
+                    messageArea.classList.remove('hidden');
+                    setTimeout(() => {
+                        messageArea.classList.add('hidden');
+                    }, 5000);
+                } else {
+                    console.error('Message area not found, cannot display message:', text);
+                }
+            }
 
-            // Placeholder for Google Sign-in logic
-            googleSigninButton.addEventListener('click', async () => {
-                showMessage('Initiating Google sign-in...', 'success');
-                // TODO: Add your Google authentication logic here.
-                // This will typically involve calling a function from a library like Supabase or Firebase
-                // to start the OAuth flow.
-                
-                // Example with a placeholder log
-                console.log('Google Sign-in button clicked. OAuth flow should start now.');
+            /**
+             * Helper function to set loading state for buttons.
+             * @param {boolean} loading - True to set loading state, false to reset.
+             * @param {HTMLElement} buttonElement - The button element to modify.
+             * @param {string} originalText - The original text of the button.
+             * @param {string} loadingText - The text to display when loading.
+             */
+            function setButtonLoading(loading, buttonElement, originalText, loadingText) {
+                buttonElement.disabled = loading;
+                buttonElement.textContent = loading ? loadingText : originalText;
+                if (loading) {
+                    buttonElement.classList.add('flex', 'items-center', 'justify-center');
+                    buttonElement.innerHTML = `<div class="spinner w-5 h-5 mr-3"></div> <span>${loadingText}</span>`;
+                } else {
+                    buttonElement.classList.remove('flex', 'items-center', 'justify-center');
+                    buttonElement.textContent = originalText;
+                }
+            }
 
-                // For now, let's just show a success message after a delay.
-                setTimeout(() => {
-                    showMessage('Redirecting to Google...', 'success');
-                    // In a real app, the redirect would happen automatically.
-                }, 1000);
+            try {
+                let SupabaseLib = null;
+                if (typeof supabase !== 'undefined') {
+                    SupabaseLib = supabase;
+                } else if (typeof Supabase !== 'undefined') {
+                    SupabaseLib = Supabase;
+                } else if (window.supabase) {
+                    SupabaseLib = window.supabase;
+                } else if (window.Supabase) {
+                    SupabaseLib = window.Supabase;
+                }
+
+                if (!SupabaseLib || !SupabaseLib.createClient) {
+                    throw new Error('Supabase library failed to load properly');
+                }
+
+                supabaseClient = SupabaseLib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('Supabase client initialized successfully on signin page');
+            } catch (error) {
+                console.error('Supabase initialization failed:', error);
+                showMessage(`Authentication system unavailable: ${error.message}`, 'error');
+                return;
+            }
+
+            // Check for existing session and redirect if found
+            async function checkExistingSession() {
+                try {
+                    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+
+                    if (userError || !user) {
+                        console.log('No active session found. Displaying sign-in form.');
+                        return;
+                    }
+
+                    console.log('Valid user session found, redirecting to account page.');
+                    showMessage('Already signed in! Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = REDIRECT_AFTER_SIGNIN;
+                    }, 1000);
+                } catch (err) {
+                    console.error('An unexpected error occurred during session check:', err);
+                    showMessage('An unexpected error occurred during session check. Please try again.', 'error');
+                }
+            }
+            checkExistingSession();
+
+            // Handle email/password sign-in form submission
+            signinForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log('Email/password sign-in form submitted.');
+
+                const email = signinEmailInput.value;
+                const password = signinPasswordInput.value;
+
+                setButtonLoading(true, signinButton, 'Sign In', 'Signing In...');
+
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                    if (error) {
+                        console.error('Sign in failed:', error.message);
+                        showMessage(`Sign in failed: ${error.message}`, 'error');
+                        setButtonLoading(false, signinButton, 'Sign In', 'Signing In...');
+                        return;
+                    }
+
+                    if (data.user) {
+                        console.log('Sign in successful:', data.user);
+                        showMessage('Sign in successful! Redirecting...', 'success');
+                        setTimeout(() => {
+                            window.location.href = REDIRECT_AFTER_SIGNIN;
+                        }, 1000);
+                    }
+                } catch (err) {
+                    console.error('An unexpected error occurred during sign-in:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                } finally {
+                    setButtonLoading(false, signinButton, 'Sign In', 'Signing In...');
+                }
             });
 
-            // Existing form submission logic remains the same
-            const signinForm = document.getElementById('signin-form');
-            signinForm.addEventListener('submit', function (event) {
-                event.preventDefault();
-                // TODO: Your existing form submission logic for email/password sign-in.
-                console.log('Email/Password form submitted.');
-                showMessage('Signing in with email and password...', 'success');
+            // Handle Google sign-in button click
+            googleSigninButton.addEventListener('click', async () => {
+                console.log('Google sign-in button clicked.');
+                setButtonLoading(true, googleSigninButton, 'Sign In with Google', 'Signing In...');
+                
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin + '/account.html',
+                        },
+                    });
+
+                    if (error) {
+                        console.error('Google sign-in failed:', error.message);
+                        showMessage(`Google sign-in failed: ${error.message}. Please try again.`, 'error');
+                        setButtonLoading(false, googleSigninButton, 'Sign In with Google', 'Signing In...');
+                    }
+                    // The page will be redirected automatically by Supabase on success.
+                } catch (err) {
+                    console.error('An unexpected error occurred during Google sign-in:', err);
+                    showMessage('An unexpected error occurred. Please try again.', 'error');
+                    setButtonLoading(false, googleSigninButton, 'Sign In with Google', 'Signing In...');
+                }
             });
         });
     </script>
